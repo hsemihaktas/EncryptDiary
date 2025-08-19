@@ -1,10 +1,10 @@
-// NotesScreen.tsx
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ModalAddNote from "../components/ModalAddNote";
+import ModalEditNote from "../components/ModalEditNote";
 import NoteItem from "../components/NoteItem";
 import { encryptNote } from "../utils/crypto";
 
@@ -13,7 +13,10 @@ export default function NotesScreen() {
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState(false);
 
-  const [modalVisible, setModalVisible] = useState(false);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
 
   const router = useRouter();
 
@@ -29,9 +32,7 @@ export default function NotesScreen() {
   useEffect(() => {
     const loadNotes = async () => {
       const stored = await AsyncStorage.getItem("SECURE_NOTES");
-      if (stored) {
-        setNotes(JSON.parse(stored));
-      }
+      if (stored) setNotes(JSON.parse(stored));
     };
     loadNotes();
   }, []);
@@ -42,24 +43,38 @@ export default function NotesScreen() {
   };
 
   const handleAddNote = async (note: string) => {
-    if (!sessionPassword || !isCorrect) return;
+    if (!sessionPassword) return;
     const enc = await encryptNote(note, sessionPassword);
-    const updated = [...notes, enc];
-    await saveNotes(updated);
+    await saveNotes([...notes, enc]);
+    setAddModalVisible(false);
   };
 
-  const deleteNote = async (index: number) => {
+  const handleDeleteNote = async (index: number) => {
     const updated = notes.filter((_, i) => i !== index);
     await saveNotes(updated);
   };
 
-  const handleLogout = () => {
-    router.push("/");
+  const handleOpenEditModal = (index: number, text: string) => {
+    setEditingIndex(index);
+    setEditingText(text);
+    setEditModalVisible(true);
   };
+
+  const handleSaveEditedNote = async (newText: string) => {
+    if (editingIndex === null || !sessionPassword) return;
+    const enc = await encryptNote(newText, sessionPassword);
+    const updated = [...notes];
+    updated[editingIndex] = enc;
+    await saveNotes(updated);
+    setEditingIndex(null);
+    setEditingText("");
+    setEditModalVisible(false);
+  };
+
+  const handleLogout = () => router.push("/");
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notlar</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -67,7 +82,6 @@ export default function NotesScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Notes list */}
       <FlatList
         data={notes}
         keyExtractor={(_, i) => i.toString()}
@@ -76,55 +90,36 @@ export default function NotesScreen() {
             item={item}
             index={index}
             password={sessionPassword!}
-            deleteNote={deleteNote}
+            isCorrect={isCorrect}
+            deleteNote={handleDeleteNote}
+            openEditModal={handleOpenEditModal}
           />
         )}
         ListEmptyComponent={<Text>Henüz not yok.</Text>}
       />
 
-      {/* + FAB */}
       {isCorrect && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setModalVisible(true)}
-        >
+        <TouchableOpacity style={styles.fab} onPress={() => setAddModalVisible(true)}>
           <MaterialIcons name="add" size={28} color="white" />
         </TouchableOpacity>
       )}
 
-      {/* Modal */}
-      <ModalAddNote
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSave={handleAddNote}
+      <ModalAddNote visible={addModalVisible} onClose={() => setAddModalVisible(false)} onSave={handleAddNote} />
+      <ModalEditNote
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        onSave={handleSaveEditedNote}
+        initialValue={editingText}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 25,
-    paddingTop: 20,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-    marginHorizontal: 10,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  logoutButton: {
-    backgroundColor: "white",
-    padding: 8,
-    borderRadius: 8,
-  },
+  safeContainer: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 25, paddingTop: 20 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20, marginHorizontal:25 },
+  headerTitle: { fontSize: 24, fontWeight: "bold" },
+  logoutButton: { backgroundColor: "white", padding: 8, borderRadius: 8 },
   fab: {
     position: "absolute",
     right: 25,

@@ -1,18 +1,31 @@
-// components/NoteItem.tsx
 import { MaterialIcons } from "@expo/vector-icons";
-import React from "react";
-import { Pressable, StyleSheet, Text, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { decryptNote } from "../utils/crypto";
 
 type NoteItemProps = {
   item: string;
   index: number;
   password: string;
+  isCorrect: boolean;
   deleteNote: (index: number) => Promise<void>;
+  openEditModal: (index: number, text: string) => void;
 };
 
-const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, deleteNote }) => {
-  const decrypted = decryptNote(item, password);
+const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, isCorrect, deleteNote, openEditModal }) => {
+  const [decrypted, setDecrypted] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const decrypt = async () => {
+      const text = await decryptNote(item, password);
+      setDecrypted(text);
+      setLoading(false);
+    };
+    decrypt();
+  }, [item, password]);
+
+  if (loading) return <ActivityIndicator style={{ marginVertical: 12 }} />;
 
   return (
     <Pressable
@@ -22,9 +35,18 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, deleteNote }
       ]}
     >
       <Text style={styles.text}>{decrypted}</Text>
-      <TouchableOpacity onPress={() => deleteNote(index)}>
-        <MaterialIcons name="delete-outline" size={26} color="red" />
-      </TouchableOpacity>
+
+      {isCorrect && (
+        <TouchableOpacity style={styles.icon} onPress={() => deleteNote(index)}>
+          <MaterialIcons name="delete-outline" size={26} color="red" />
+        </TouchableOpacity>
+      )}
+
+      {isCorrect && (
+        <TouchableOpacity style={styles.icon} onPress={() => openEditModal(index, decrypted)}>
+          <MaterialIcons name="edit" size={24} color="#007bff" />
+        </TouchableOpacity>
+      )}
     </Pressable>
   );
 };
@@ -42,13 +64,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    elevation: 4, // Android shadow
+    elevation: 4,
   },
-  text: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-  },
+  text: { flex: 1, fontSize: 16, color: "#333" },
+  icon: { marginLeft: 10 },
 });
 
 export default NoteItem;

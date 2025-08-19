@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
-type ModalAddNoteProps = {
+type ModalEditNoteProps = {
   visible: boolean;
   onClose: () => void;
   onSave: (text: string) => Promise<void>;
+  initialValue: string;
 };
 
-const ModalAddNote: React.FC<ModalAddNoteProps> = ({ visible, onClose, onSave }) => {
-  const [text, setText] = useState("");
+const ModalEditNote: React.FC<ModalEditNoteProps> = ({ visible, onClose, onSave, initialValue }) => {
+  const [text, setText] = useState(initialValue);
 
   useEffect(() => {
-    if (visible) setText("");
-  }, [visible]);
+    if (visible) setText(initialValue);
+  }, [visible, initialValue]);
 
   const handleSave = async () => {
     if (!text.trim()) return;
     await onSave(text.trim());
-    setText("");
   };
 
   return (
@@ -26,7 +26,7 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({ visible, onClose, onSave })
         <View style={styles.modal}>
           <TextInput
             style={styles.input}
-            placeholder="Yeni not..."
+            placeholder="Notu düzenleyin..."
             value={text}
             onChangeText={setText}
             multiline
@@ -56,4 +56,4 @@ const styles = StyleSheet.create({
   buttonText: { fontSize: 16, fontWeight: "bold" },
 });
 
-export default ModalAddNote;
+export default ModalEditNote;
