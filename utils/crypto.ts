@@ -30,15 +30,24 @@ export const decryptNote = async (
     );
     const decoded = atob(encryptedNote);
 
-    // şifre doğruysa -> hash kısmını temizle
     if (decoded.endsWith(key.slice(0, 5))) {
+      // Doğru şifre
       return decoded.replace(key.slice(0, 5), "");
     }
 
-    // şifre yanlışsa -> zaten hash tutmaz, decoded'i direkt döndür
-    return decoded;
+    // Yanlış şifre → decoded + password karakterlerini birleştirip shuffle
+    const combined = [...decoded.split(""), ...password.split("")];
+
+    for (let i = combined.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [combined[i], combined[j]] = [combined[j], combined[i]];
+    }
+
+    // Orijinal mesaj uzunluğunda döndür
+    return combined.slice(0, decoded.length).join("");
   } catch (e) {
-    // hata varsa (ör: yanlış base64) direkt döndür
     return "⚠️ Decrypt Error";
   }
 };
+
+
