@@ -1,6 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { decryptNote } from "../utils/crypto";
 
 type NoteItemProps = {
@@ -15,6 +15,8 @@ type NoteItemProps = {
 const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, isCorrect, deleteNote, openEditModal }) => {
   const [decrypted, setDecrypted] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   useEffect(() => {
     const decrypt = async () => {
@@ -25,16 +27,23 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, isCorrect, d
     decrypt();
   }, [item, password]);
 
-  if (loading) return <ActivityIndicator style={{ marginVertical: 12 }} />;
+  if (loading) return <ActivityIndicator style={{ marginVertical: 12 }} color={isDark ? "#fff" : "#000"} />;
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.card,
+        { backgroundColor: isDark ? "#1E1E1E" : "#fff", shadowColor: isDark ? "#000" : "#aaa" },
         pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
       ]}
     >
-      <Text style={styles.text}>{decrypted}</Text>
+      <Text style={[styles.text, { color: isDark ? "#fff" : "#333" }]}>{decrypted}</Text>
+
+      {isCorrect && (
+        <TouchableOpacity style={styles.icon} onPress={() => openEditModal(index, decrypted)}>
+          <MaterialIcons name="edit" size={24} color="#007bff" />
+        </TouchableOpacity>
+      )}
 
       {isCorrect && (
         <TouchableOpacity style={styles.icon} onPress={() => deleteNote(index)}>
@@ -42,11 +51,6 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, isCorrect, d
         </TouchableOpacity>
       )}
 
-      {isCorrect && (
-        <TouchableOpacity style={styles.icon} onPress={() => openEditModal(index, decrypted)}>
-          <MaterialIcons name="edit" size={24} color="#007bff" />
-        </TouchableOpacity>
-      )}
     </Pressable>
   );
 };
@@ -59,14 +63,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
-    backgroundColor: "#ffffff",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 4,
   },
-  text: { flex: 1, fontSize: 16, color: "#333" },
+  text: { flex: 1, fontSize: 16 },
   icon: { marginLeft: 10 },
 });
 

@@ -2,7 +2,15 @@ import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    FlatList,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    useColorScheme,
+} from "react-native";
 import ModalAddNote from "../components/ModalAddNote";
 import ModalEditNote from "../components/ModalEditNote";
 import NoteItem from "../components/NoteItem";
@@ -12,17 +20,20 @@ export default function NotesScreen() {
   const [notes, setNotes] = useState<string[]>([]);
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState(false);
-
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
 
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   useEffect(() => {
     const loadSession = async () => {
-      const storedSession = await AsyncStorage.getItem("current_session_password");
+      const storedSession = await AsyncStorage.getItem(
+        "current_session_password"
+      );
       setSessionPassword(storedSession);
       setIsCorrect(storedSession !== "locked");
     };
@@ -74,9 +85,21 @@ export default function NotesScreen() {
   const handleLogout = () => router.push("/");
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notlar</Text>
+    <SafeAreaView
+      style={[
+        styles.safeContainer,
+        isDark ? styles.safeContainerDark : styles.safeContainerLight,
+      ]}
+    >
+      <View style={[styles.header, { marginHorizontal: 25 }]}>
+        <Text
+          style={[
+            styles.headerTitle,
+            isDark ? styles.textDark : styles.textLight,
+          ]}
+        >
+          Notlar
+        </Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <MaterialIcons name="logout" size={28} color="red" />
         </TouchableOpacity>
@@ -95,16 +118,27 @@ export default function NotesScreen() {
             openEditModal={handleOpenEditModal}
           />
         )}
-        ListEmptyComponent={<Text>Henüz not yok.</Text>}
+        ListEmptyComponent={
+          <Text style={isDark ? styles.textDark : styles.textLight}>
+            Henüz not yok.
+          </Text>
+        }
       />
 
       {isCorrect && (
-        <TouchableOpacity style={styles.fab} onPress={() => setAddModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setAddModalVisible(true)}
+        >
           <MaterialIcons name="add" size={28} color="white" />
         </TouchableOpacity>
       )}
 
-      <ModalAddNote visible={addModalVisible} onClose={() => setAddModalVisible(false)} onSave={handleAddNote} />
+      <ModalAddNote
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        onSave={handleAddNote}
+      />
       <ModalEditNote
         visible={editModalVisible}
         onClose={() => setEditModalVisible(false)}
@@ -116,10 +150,23 @@ export default function NotesScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 25, paddingTop: 20 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20, marginHorizontal:25 },
+  safeContainer: { flex: 1, paddingHorizontal: 25, paddingTop: 20 },
+  safeContainerLight: { backgroundColor: "#fff" },
+  safeContainerDark: { backgroundColor: "#121212" },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   headerTitle: { fontSize: 24, fontWeight: "bold" },
-  logoutButton: { backgroundColor: "white", padding: 8, borderRadius: 8 },
+  textLight: { color: "#000" },
+  textDark: { color: "#fff" },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "transparent", // 🔹 artık arka plan yok
+  },
   fab: {
     position: "absolute",
     right: 25,
