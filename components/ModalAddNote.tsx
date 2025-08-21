@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
+  Dimensions,
+  ImageBackground,
   Modal,
-  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  useColorScheme,
 } from "react-native";
 
 type ModalAddNoteProps = {
@@ -17,11 +16,11 @@ type ModalAddNoteProps = {
   onSave: (title: string, text: string) => Promise<void>;
 };
 
+const { width, height } = Dimensions.get("window");
+
 const ModalAddNote: React.FC<ModalAddNoteProps> = ({ visible, onClose, onSave }) => {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
 
   useEffect(() => {
     if (visible) {
@@ -35,72 +34,97 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({ visible, onClose, onSave })
     await onSave(title.trim(), text.trim());
     setTitle("");
     setText("");
+    onClose();
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={[styles.container, { backgroundColor: "rgba(0,0,0,0.5)" }]}
-      >
-        <View style={[styles.modal, { backgroundColor: isDark ? "#1E1E1E" : "#fff" }]}>
-          {/* Başlık inputu */}
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={styles.overlay}>
+        <ImageBackground
+          source={require("../assets/images/paper_texture.png")}
+          style={styles.modal}
+          imageStyle={{ resizeMode: "cover" }}
+        >
+          {/* Başlık input */}
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDark ? "#2A2A2A" : "#fff",
-                color: isDark ? "#fff" : "#333",
-                borderColor: isDark ? "#555" : "#ccc",
-                fontWeight: "bold",
-              },
-            ]}
+            style={[styles.input, { backgroundColor: "transparent", color: "#000", fontWeight: "bold" }]}
             placeholder="Başlık"
-            placeholderTextColor={isDark ? "#888" : "#999"}
+            placeholderTextColor="#666"
             value={title}
             onChangeText={setTitle}
           />
 
-          {/* İçerik inputu */}
+          {/* Yeni not input */}
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: isDark ? "#2A2A2A" : "#fff",
-                color: isDark ? "#fff" : "#333",
-                borderColor: isDark ? "#555" : "#ccc",
-              },
-            ]}
+            style={[styles.inputText, { backgroundColor: "transparent", color: "#000" }]}
             placeholder="Yeni not..."
-            placeholderTextColor={isDark ? "#888" : "#999"}
+            placeholderTextColor="#666"
             value={text}
             onChangeText={setText}
             multiline
           />
 
+          {/* Butonlar modalın en altında */}
           <View style={styles.buttons}>
             <TouchableOpacity style={[styles.button, styles.cancel]} onPress={onClose}>
-              <Text style={[styles.buttonText, { color: "white" }]}>İptal</Text>
+              <Text style={styles.buttonText}>İptal</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.button, styles.save]} onPress={handleSave}>
-              <Text style={[styles.buttonText, { color: "white" }]}>Kaydet</Text>
+              <Text style={styles.buttonText}>Kaydet</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </ImageBackground>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "flex-end" },
-  modal: { padding: 20, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  input: { minHeight: 50, borderWidth: 1, borderRadius: 12, padding: 12, textAlignVertical: "top", marginBottom: 16 },
-  buttons: { flexDirection: "row", justifyContent: "flex-end" },
-  button: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 12, marginLeft: 10 },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modal: {
+    width: width * 0.85,
+    height: height * 0.7,
+    padding: 20,
+    borderRadius: 16,
+    overflow: "hidden",
+    justifyContent: "space-between",
+  },
+  input: {
+    minHeight: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    textAlignVertical: "top",
+    marginBottom: 16,
+    borderColor: "#ccc",
+  },
+  inputText: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    textAlignVertical: "top",
+    marginBottom: 16,
+    borderColor: "#ccc",
+  },
+  buttons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginLeft: 10,
+  },
   cancel: { backgroundColor: "red" },
   save: { backgroundColor: "#007bff" },
-  buttonText: { fontSize: 16, fontWeight: "bold" },
+  buttonText: { fontSize: 16, fontWeight: "bold", color: "white" },
 });
 
 export default ModalAddNote;

@@ -3,28 +3,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Dimensions,
-  FlatList,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from "react-native";
 import ModalAddNote from "../components/ModalAddNote";
 import NoteItem from "../components/NoteItem";
 import { useNotes } from "../context/NotesContext";
 
-const { width } = Dimensions.get("window");
-const NUM_COLUMNS = 2;
-const SIDE_PADDING = 20;
-const CARD_MARGIN = 12;
-
 export default function NotesScreen() {
   const { notes, addNote } = useNotes();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const router = useRouter();
 
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
@@ -33,8 +24,8 @@ export default function NotesScreen() {
 
   useEffect(() => {
     const loadPasswords = async () => {
-      const stored = await AsyncStorage.getItem("user_password"); // kullanıcı şifresi
-      const session = await AsyncStorage.getItem("current_session_password"); // oturum şifresi
+      const stored = await AsyncStorage.getItem("user_password");
+      const session = await AsyncStorage.getItem("current_session_password");
       setStoredPassword(stored);
       setSessionPassword(session);
     };
@@ -52,83 +43,39 @@ export default function NotesScreen() {
     setModalVisible(false);
   };
 
-  const renderItem = ({ item, index }: any) => {
-    const cardWidth =
-      (width - SIDE_PADDING * 2 - CARD_MARGIN * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
-
-    return (
-      <View
-        style={[
-          styles.cardWrapper,
-          { width: cardWidth, backgroundColor: isDark ? "#1E1E1E" : "#fff" },
-        ]}
-      >
-        <NoteItem
-          item={item}
-          index={index}
-          password={sessionPassword!}
-          openEditModal={(i) =>
-            router.push({
-              pathname: "/noteDetail",
-              params: { index: i.toString() },
-            })
-          }
-        />
-      </View>
-    );
-  };
-
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: isDark ? "#121212" : "#f5f5f5" }]}
-    >
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={[styles.header, { color: isDark ? "#fff" : "#333" }]}>
-          Notlarım
-        </Text>
+        <Text style={styles.header}>My Journal</Text>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <MaterialIcons name="logout" size={28} color="red" />
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={notes}
-        keyExtractor={(_, i) => i.toString()}
-        contentContainerStyle={{
-          paddingBottom: 80,
-          paddingHorizontal: SIDE_PADDING,
-        }}
-        numColumns={NUM_COLUMNS}
-        columnWrapperStyle={{
-          justifyContent: "space-between",
-          marginBottom: CARD_MARGIN,
-        }}
-        renderItem={renderItem}
-        ListEmptyComponent={
-          <Text
-            style={{
-              color: isDark ? "#fff" : "#555",
-              textAlign: "center",
-              marginTop: 40,
-              fontSize: 16,
-            }}
-          >
-            Henüz not yok.
-          </Text>
-        }
-      />
+      <ScrollView contentContainerStyle={styles.notesContainer}>
+        {notes.map((item, index) => (
+          <NoteItem
+            key={index}
+            item={item}
+            index={index}
+            password={sessionPassword!}
+            openEditModal={(i) =>
+              router.push({
+                pathname: "/noteDetail",
+                params: { index: i.toString() },
+              })
+            }
+          />
+        ))}
+      </ScrollView>
 
       {/* Sağ alt + butonu sadece şifreler aynıysa */}
       {sessionPassword && storedPassword && sessionPassword === storedPassword && (
-        <TouchableOpacity
-          style={[styles.fab, { backgroundColor: "#007bff", shadowColor: isDark ? "#000" : "#aaa" }]}
-          onPress={() => setModalVisible(true)}
-        >
+        <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
           <MaterialIcons name="add" size={28} color="#fff" />
         </TouchableOpacity>
       )}
 
-      {/* Add Note Modal */}
       <ModalAddNote
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -139,27 +86,23 @@ export default function NotesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 20 },
+  container: { flex: 1, paddingTop: 20, backgroundColor: "#f0e6d2" },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
     marginTop: 30,
-    marginHorizontal: SIDE_PADDING,
+    paddingHorizontal: 20,
   },
-  header: { fontSize: 28, fontWeight: "bold" },
+  header: { fontSize: 28, fontWeight: "bold", color: "#5a3e1b" },
   logoutButton: { padding: 5 },
-  cardWrapper: {
-    borderRadius: 16,
-    padding: 12,
-    minHeight: 140,
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+  notesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    paddingHorizontal: 14,
+    paddingBottom: 20,
   },
   fab: {
     position: "absolute",
@@ -170,6 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#a0522d",
     elevation: 8,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

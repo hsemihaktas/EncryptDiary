@@ -1,5 +1,6 @@
+import * as Font from 'expo-font';
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, useColorScheme } from "react-native";
+import { ActivityIndicator, ImageBackground, Pressable, StyleSheet, Text, View } from "react-native";
 import { decryptNote } from "../utils/crypto";
 
 type NoteType = {
@@ -11,16 +12,27 @@ type NoteItemProps = {
   item: NoteType;
   index: number;
   password: string;
-  openEditModal: (index: number, text: string) => void; // detay sayfasına yönlendirme
+  openEditModal: (index: number, text: string) => void;
 };
 
 const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, openEditModal }) => {
   const [decryptedTitle, setDecryptedTitle] = useState<string>("");
-  const [decryptedContent, setDecryptedContent] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [fontLoaded, setFontLoaded] = useState(false);
 
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await Font.loadAsync({
+          GreatVibes: require("../assets/fonts/GreatVibes-Regular.ttf"),
+        });
+        setFontLoaded(true);
+      } catch (err) {
+        console.error("Font load error:", err);
+      }
+    };
+    load();
+  }, []);
 
   useEffect(() => {
     const decrypt = async () => {
@@ -28,17 +40,10 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, openEditModa
         const title = item.encTitle
           ? await decryptNote(item.encTitle, password)
           : "Başlık yok";
-
-        const content = item.encContent
-          ? await decryptNote(item.encContent, password)
-          : "";
-
         setDecryptedTitle(title);
-        setDecryptedContent(content);
       } catch (err) {
         console.error("Decrypt error:", err, "Item:", item);
         setDecryptedTitle("🔒 Şifre çözülmedi");
-        setDecryptedContent("");
       } finally {
         setLoading(false);
       }
@@ -46,52 +51,51 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, openEditModa
     decrypt();
   }, [item, password]);
 
-  if (loading)
-    return (
-      <ActivityIndicator
-        style={{ marginVertical: 12 }}
-        color={isDark ? "#fff" : "#000"}
-      />
-    );
+  if (loading || !fontLoaded)
+    return <ActivityIndicator style={{ marginVertical: 12 }} color="#000" />;
 
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: isDark ? "#1E1E1E" : "#fff", shadowColor: isDark ? "#000" : "#aaa" },
-        pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-      ]}
-      onPress={() =>
-        openEditModal(index, decryptedTitle + "\n" + decryptedContent)
-      } // detay sayfasına yönlendir
-    >
-      <Text
-        style={[styles.title, { color: isDark ? "#fff" : "#111" }]}
-        numberOfLines={1}
+    <Pressable style={styles.cardContainer} onPress={() => openEditModal(index, decryptedTitle)}>
+      <ImageBackground
+        source={require("../assets/images/cover_texture.png")}
+        style={styles.card}
       >
-        {decryptedTitle}
-      </Text>
+        <View style={styles.titleWrapper}>
+          <Text style={styles.title} numberOfLines={2}>
+            {decryptedTitle}
+          </Text>
+        </View>
+      </ImageBackground>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
+  cardContainer: {
+    marginHorizontal: 6,
+    marginVertical: 8,
+  },
   card: {
-    flexDirection: "column",
-    justifyContent: "flex-start",
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 15,
-    elevation: 5,
+    width: 180,
+    height: 290, // biraz daha dikey
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  titleWrapper: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   title: {
-    fontSize: 16,
+    color: "#fff",
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 4,
-  },
-  text: {
-    fontSize: 14,
-    lineHeight: 20,
+    textAlign: "center",
+    fontFamily: "GreatVibes", // burası el yazısı
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 });
 

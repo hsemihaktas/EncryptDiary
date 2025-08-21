@@ -1,25 +1,35 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Font from "expo-font";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View, useColorScheme } from "react-native";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const normalize = (s: string | null) => (s ?? "").normalize("NFKC").trim();
 
 export default function PasswordScreen() {
+  const [fontLoaded, setFontLoaded] = useState(false);
   const [password, setPassword] = useState("");
   const [savedPassword, setSavedPassword] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const colorScheme = useColorScheme(); 
-  const isDark = colorScheme === "dark";
 
   useEffect(() => {
-    const loadPassword = async () => {
-      const stored = await AsyncStorage.getItem("user_password");
-      setSavedPassword(stored);
-      setLoading(false);
+    const loadFontsAndPassword = async () => {
+      try {
+        await Font.loadAsync({
+          "GreatVibes-Regular": require("../assets/fonts/GreatVibes-Regular.ttf"),
+        });
+        setFontLoaded(true);
+
+        const stored = await AsyncStorage.getItem("user_password");
+        setSavedPassword(stored);
+      } catch (err) {
+        console.error("Error loading font or password:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    loadPassword();
+    loadFontsAndPassword();
   }, []);
 
   const handleSubmit = async () => {
@@ -28,7 +38,6 @@ export default function PasswordScreen() {
 
     if (!savedPassword) {
       await AsyncStorage.setItem("user_password", input);
-      Alert.alert("Şifre kaydedildi!");
       await AsyncStorage.setItem("current_session_password", input);
       router.push("/notes");
       return;
@@ -43,59 +52,70 @@ export default function PasswordScreen() {
     }
   };
 
-  if (loading) {
+  if (loading || !fontLoaded) {
     return (
-      <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
-        <Text style={isDark ? styles.textDark : styles.textLight}>Loading...</Text>
+      <View style={styles.container}>
+        <Text style={styles.text}>Loading...</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
-      <Text style={[styles.title, isDark ? styles.textDark : styles.textLight]}>
-        {savedPassword ? "Şifrenizi Girin" : "Yeni Şifre Belirleyin"}
-      </Text>
+    <View style={styles.container}>
+      {/* Uygulama ismi */}
+      <Text style={styles.appName}>Encrypt Dairy</Text>
 
+      {/* Şifre input */}
       <TextInput
-        style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
+        style={styles.input}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-        placeholder="Şifre"
-        placeholderTextColor={isDark ? "#aaa" : "#666"}
+        placeholder={savedPassword ? "Şifrenizi Girin" : "Yeni Şifre Belirleyin"}
+        placeholderTextColor="#666"
       />
 
-      <TouchableOpacity
-        style={[styles.button, isDark ? styles.buttonDark : styles.buttonLight]}
-        onPress={handleSubmit}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.buttonText, isDark ? styles.buttonTextDark : styles.buttonTextLight]}>
-          {savedPassword ? "Giriş Yap" : "Şifre Kaydet"}
-        </Text>
+      {/* Buton */}
+      <TouchableOpacity style={styles.button} onPress={handleSubmit} activeOpacity={0.8}>
+        <Text style={styles.buttonText}>{savedPassword ? "Giriş Yap" : "Şifre Kaydet"}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20 },
-  containerLight: { backgroundColor: "#fff" },
-  containerDark: { backgroundColor: "#121212" },
+  container: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "#f0e6d2" },
 
-  title: { fontSize: 22, textAlign: "center", marginBottom: 20, fontWeight: "bold" },
-  textLight: { color: "#000" },
-  textDark: { color: "#fff" },
+  appName: {
+    fontFamily: "GreatVibes-Regular",
+    fontSize: 48,
+    textAlign: "center",
+    marginBottom: 30,
+    color: "#007bff",
+  },
 
-  input: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 20 },
-  inputLight: { borderColor: "#ccc", color: "#000", backgroundColor: "#fff" },
-  inputDark: { borderColor: "#444", color: "#fff", backgroundColor: "#222" },
+  title: { fontSize: 22, textAlign: "center", marginBottom: 20, fontWeight: "bold", color: "#000" },
+  text: { color: "#000", textAlign: "center" },
 
-  button: { paddingVertical: 14, borderRadius: 12, alignItems: "center", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
-  buttonLight: { backgroundColor: "#007bff", shadowColor: "#007bff" },
-  buttonDark: { backgroundColor: "#1E90FF", shadowColor: "#1E90FF" },
-  buttonText: { fontSize: 16, fontWeight: "bold" },
-  buttonTextLight: { color: "#fff" },
-  buttonTextDark: { color: "#fff" },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    borderColor: "#ccc",
+    color: "#000",
+    backgroundColor: "#fff",
+  },
+
+  button: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: "#007bff",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonText: { fontSize: 16, fontWeight: "bold", color: "#fff" },
 });

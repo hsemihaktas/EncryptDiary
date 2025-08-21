@@ -3,14 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
+  ImageBackground,
   Modal,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
-  View,
+  View
 } from "react-native";
 import { useNotes } from "../context/NotesContext";
 import { decryptNote } from "../utils/crypto";
@@ -34,8 +33,6 @@ export default function NoteDetailScreen() {
   const [loaded, setLoaded] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
 
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const router = useRouter();
 
   useEffect(() => {
@@ -59,7 +56,10 @@ export default function NoteDetailScreen() {
           setTitle("");
           setNoteText(decContent);
         } else if ("encContent" in n && !("encTitle" in n)) {
-          const decContent = await decryptNote((n as LegacyNoteV1).encContent, password);
+          const decContent = await decryptNote(
+            (n as LegacyNoteV1).encContent,
+            password
+          );
           setTitle("");
           setNoteText(decContent);
         } else if ("encTitle" in n && "encContent" in n) {
@@ -115,75 +115,96 @@ export default function NoteDetailScreen() {
   };
 
   // Şifre eşleşiyor mu kontrol
-  const canEdit = sessionPassword && storedPassword && sessionPassword === storedPassword;
+  const canEdit =
+    sessionPassword && storedPassword && sessionPassword === storedPassword;
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? "#121212" : "#f5f5f5" }]}>
+    <View style={[styles.container, { backgroundColor: "#f0e6d2" }]}>
       {/* Geri */}
       <TouchableOpacity
-        style={[styles.backButton, { backgroundColor: "transparent", borderColor: isDark ? "#fff" : "#007bff" }]}
+        style={[styles.backButton]}
         onPress={() => router.push("/notes")}
       >
-        <MaterialIcons name="arrow-back" size={28} color={isDark ? "#fff" : "#007bff"} />
+        <MaterialIcons name="arrow-back" size={28} color="#007bff" />
       </TouchableOpacity>
 
       {/* Sağ üst butonlar sadece şifre eşleşiyorsa */}
       {canEdit && (
         <View style={styles.rightButtons}>
           <TouchableOpacity
-            style={[styles.topButton, isDeleting ? styles.disabledButton : { backgroundColor: "red" }]}
+            style={[styles.topButton]}
             onPress={() => setConfirmVisible(true)}
             disabled={isDeleting}
           >
-            {isDeleting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <MaterialIcons name="delete-outline" size={28} color="#fff" />
-            )}
+            <MaterialIcons name="delete-outline" size={28} color="red" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.topButton, { backgroundColor: "#007bff" }]} onPress={handleEditToggle}>
-            <MaterialIcons name={isEditing ? "save" : "edit"} size={28} color="#fff" />
+          <TouchableOpacity
+            style={[styles.topButton]}
+            onPress={handleEditToggle}
+          >
+            <MaterialIcons
+              name={isEditing ? "save" : "edit"}
+              size={28}
+              color="#007bff"
+            />
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Başlık input */}
-      <TextInput
-        style={[
-          styles.titleInput,
-          {
-            color: isDark ? "#fff" : "#000",
-            backgroundColor: isDark ? "#1E1E1E" : "#fff",
-          },
-        ]}
-        placeholder="Başlık"
-        placeholderTextColor={isDark ? "#aaa" : "#666"}
-        editable={isEditing && !!canEdit}
-        value={loaded ? title : ""}
-        onChangeText={setTitle}
-      />
+      {/* Kağıt dokulu arkaplanlı kutu */}
+      <ImageBackground
+        source={require("../assets/images/paper_texture.png")}
+        style={{
+          width: "100%",
+          minHeight: "70%",
+          marginVertical: 20,
+        }}
+        imageStyle={{
+          resizeMode: "cover", // resmi tamamen kaplasın
+          width: "100%",
+        }}
+      >
+        <View style={{ flex: 1, padding: 20 }}>
+          {/* Başlık */}
+          <TextInput
+            style={[styles.titleInput, { color: "#000" }]}
+            placeholder="Başlık"
+            placeholderTextColor="#666"
+            editable={isEditing && !!canEdit}
+            value={loaded ? title : ""}
+            onChangeText={setTitle}
+          />
 
-      {/* İçerik input */}
-      <TextInput
-        style={[
-          styles.input,
-          { color: isDark ? "#fff" : "#000", backgroundColor: isDark ? "#1E1E1E" : "#fff" },
-        ]}
-        multiline
-        editable={isEditing && !!canEdit}
-        value={loaded ? noteText : ""}
-        onChangeText={setNoteText}
-      />
+          {/* İçerik */}
+          <TextInput
+            style={[styles.input, { color: "#000" }]}
+            multiline
+            editable={isEditing && !!canEdit}
+            value={loaded ? noteText : ""}
+            onChangeText={setNoteText}
+          />
+        </View>
+      </ImageBackground>
 
       {/* Confirm Modal */}
       {canEdit && (
-        <Modal transparent visible={confirmVisible} animationType="fade" onRequestClose={() => setConfirmVisible(false)}>
+        <Modal
+          transparent
+          visible={confirmVisible}
+          animationType="fade"
+          onRequestClose={() => setConfirmVisible(false)}
+        >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalText}>Bu notu silmek istiyor musun?</Text>
+              <Text style={styles.modalText}>
+                Bu notu silmek istiyor musun?
+              </Text>
               <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: "#ccc" }]} onPress={() => setConfirmVisible(false)}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
+                  onPress={() => setConfirmVisible(false)}
+                >
                   <Text>İptal</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -207,35 +228,45 @@ export default function NoteDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 140, // title biraz daha aşağıda
+    backgroundColor: "#f0e6d2",
+    justifyContent: "center", // ortalama
+    alignItems: "center", // ortalama
     paddingHorizontal: 20,
-    position: "relative",
+  },
+  noteWrapper: {
+    width: "100%",
+    minHeight: "70%",
+    marginVertical: 20,
+    padding: 20,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  noteBg: {
+    resizeMode: "cover",
+    width: "100%",
+    height: "100%",
   },
   titleInput: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    marginTop: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 12,
+    lineHeight: 28,
+    letterSpacing: 0.5,
+    textTransform: "uppercase", // büyük harf
+    textAlign: "center", // ortala
   },
   input: {
-    minHeight: 200,
+    flex: 1,
     fontSize: 16,
-    padding: 16,
-    borderRadius: 16,
     textAlignVertical: "top",
-    marginTop: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   topButton: {
     padding: 8,
@@ -251,11 +282,44 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   disabledButton: { backgroundColor: "#8b0000", opacity: 0.9 },
-  rightButtons: { position: "absolute", top: 80, right: 20, flexDirection: "row", zIndex: 10 },
-  backButton: { position: "absolute", top: 80, left: 20, zIndex: 10, padding: 8, borderRadius: 50, borderWidth: 2, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { backgroundColor: "#fff", padding: 20, borderRadius: 12, width: "80%" },
+  rightButtons: {
+    position: "absolute",
+    top: 80,
+    right: 20,
+    flexDirection: "row",
+    zIndex: 10,
+  },
+  backButton: {
+    position: "absolute",
+    top: 80,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 12,
+    width: "80%",
+  },
   modalText: { fontSize: 18, marginBottom: 20, textAlign: "center" },
   modalButtons: { flexDirection: "row", justifyContent: "space-between" },
-  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 8, alignItems: "center" },
+  modalBtn: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
 });
