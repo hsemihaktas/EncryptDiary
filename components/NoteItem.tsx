@@ -106,9 +106,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject, // tüm ImageBackground'ı kaplar
-    backgroundColor: "rgba(0,0,0,0.4)", // siyah ve 0.2 transparan
-    borderRadius: 12, // eğer card borderRadius varsa overlay de uyumlu olsun
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 12,
   },
   titleWrapper: {
     paddingHorizontal: 8,
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
-    fontFamily: "GreatVibes", // burası el yazısı
+    fontFamily: "GreatVibes",
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,

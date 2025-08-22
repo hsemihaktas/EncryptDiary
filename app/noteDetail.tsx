@@ -223,7 +223,7 @@ export default function NoteDetailScreen() {
     </View>
   );
 }
-const LINE_HEIGHT = 28; // LinedPaper ile aynı olmalı
+const LINE_HEIGHT = 28;
 
 const styles = StyleSheet.create({
   container: {
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: "70%",
     elevation: 6,
-      borderRadius: 12,
+    borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#fffef7",
   },
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    lineHeight: LINE_HEIGHT, // 👈 çizgilerle hizalama
+    lineHeight: LINE_HEIGHT,
     letterSpacing: 0.3,
   },
 
@@ -265,7 +265,6 @@ const styles = StyleSheet.create({
     minWidth: 48,
     alignItems: "center",
     justifyContent: "center",
-
     elevation: 6,
   },
   disabledButton: { backgroundColor: "#8b0000", opacity: 0.9 },
@@ -282,10 +281,6 @@ const styles = StyleSheet.create({
     left: 20,
     zIndex: 10,
     padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
     elevation: 3,
   },
   modalOverlay: {

@@ -50,6 +50,6 @@ export default function LinedPaper({ children }: { children: React.ReactNode }) 
 const styles = RNStyleSheet.create({
   paper: {
     flex: 1,
-    backgroundColor: "#fffef7", // hafif sarımsı kağıt tonu
+    backgroundColor: "#fffef7",
   },
 });
