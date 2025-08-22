@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
-  ImageBackground,
   Modal,
   StyleSheet,
   Text,
@@ -9,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import LinedPaper from "./LinedPaper";
 
 type ModalAddNoteProps = {
   visible: boolean;
@@ -18,7 +18,11 @@ type ModalAddNoteProps = {
 
 const { width, height } = Dimensions.get("window");
 
-const ModalAddNote: React.FC<ModalAddNoteProps> = ({ visible, onClose, onSave }) => {
+const ModalAddNote: React.FC<ModalAddNoteProps> = ({
+  visible,
+  onClose,
+  onSave,
+}) => {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
 
@@ -40,40 +44,54 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({ visible, onClose, onSave })
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        <ImageBackground
-          source={require("../assets/images/paper_texture.png")}
-          style={styles.modal}
-          imageStyle={{ resizeMode: "cover" }}
-        >
-          {/* Başlık input */}
-          <TextInput
-            style={[styles.input, { backgroundColor: "transparent", color: "#000", fontWeight: "bold" }]}
-            placeholder="Başlık"
-            placeholderTextColor="#666"
-            value={title}
-            onChangeText={setTitle}
-          />
+        <View style={styles.paperWrapper}>
+          <LinedPaper>
+            {/* Başlık input */}
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: "transparent",
+                  color: "#000",
+                  fontWeight: "bold",
+                },
+              ]}
+              placeholder="Başlık"
+              placeholderTextColor="#666"
+              value={title}
+              onChangeText={setTitle}
+            />
 
-          {/* Yeni not input */}
-          <TextInput
-            style={[styles.inputText, { backgroundColor: "transparent", color: "#000" }]}
-            placeholder="Yeni not..."
-            placeholderTextColor="#666"
-            value={text}
-            onChangeText={setText}
-            multiline
-          />
+            {/* Yeni not input */}
+            <TextInput
+              style={[
+                styles.inputText,
+                { backgroundColor: "transparent", color: "#000" },
+              ]}
+              placeholder="Yeni not..."
+              placeholderTextColor="#666"
+              value={text}
+              onChangeText={setText}
+              multiline
+            />
 
-          {/* Butonlar modalın en altında */}
-          <View style={styles.buttons}>
-            <TouchableOpacity style={[styles.button, styles.cancel]} onPress={onClose}>
-              <Text style={styles.buttonText}>İptal</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.save]} onPress={handleSave}>
-              <Text style={styles.buttonText}>Kaydet</Text>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
+            {/* Butonlar modalın en altında */}
+            <View style={styles.buttons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancel]}
+                onPress={onClose}
+              >
+                <Text style={styles.buttonText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.save]}
+                onPress={handleSave}
+              >
+                <Text style={styles.buttonText}>Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+          </LinedPaper>
+        </View>
       </View>
     </Modal>
   );
@@ -86,30 +104,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  modal: {
+  paperWrapper: {
     width: width * 0.85,
     height: height * 0.7,
-    padding: 20,
     borderRadius: 16,
     overflow: "hidden",
-    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    elevation: 5,
   },
   input: {
     minHeight: 50,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
     textAlignVertical: "top",
-    marginBottom: 16,
+    marginTop: 24,
+    marginBottom: 12,
     borderColor: "#ccc",
   },
   inputText: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
     textAlignVertical: "top",
-    marginBottom: 16,
     borderColor: "#ccc",
   },
   buttons: {
@@ -120,7 +136,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 12,
-    marginLeft: 10,
+    margin: 10,
   },
   cancel: { backgroundColor: "red" },
   save: { backgroundColor: "#007bff" },

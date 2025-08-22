@@ -1,6 +1,13 @@
-import * as Font from 'expo-font';
+import * as Font from "expo-font";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, ImageBackground, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { decryptNote } from "../utils/crypto";
 
 type NoteType = {
@@ -15,7 +22,12 @@ type NoteItemProps = {
   openEditModal: (index: number, text: string) => void;
 };
 
-const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, openEditModal }) => {
+const NoteItem: React.FC<NoteItemProps> = ({
+  item,
+  index,
+  password,
+  openEditModal,
+}) => {
   const [decryptedTitle, setDecryptedTitle] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [fontLoaded, setFontLoaded] = useState(false);
@@ -55,11 +67,16 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, password, openEditModa
     return <ActivityIndicator style={{ marginVertical: 12 }} color="#000" />;
 
   return (
-    <Pressable style={styles.cardContainer} onPress={() => openEditModal(index, decryptedTitle)}>
+    <Pressable
+      style={styles.cardContainer}
+      onPress={() => openEditModal(index, decryptedTitle)}
+    >
       <ImageBackground
         source={require("../assets/images/cover_texture.png")}
         style={styles.card}
+        imageStyle={styles.cardİmage}
       >
+        <View style={styles.overlay} />
         <View style={styles.titleWrapper}>
           <Text style={styles.title} numberOfLines={2}>
             {decryptedTitle}
@@ -80,7 +97,18 @@ const styles = StyleSheet.create({
     height: 290, // biraz daha dikey
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden",
+    borderRadius: 12,
+  },
+  cardİmage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "stretch",
+    borderRadius: 12,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject, // tüm ImageBackground'ı kaplar
+    backgroundColor: "rgba(0,0,0,0.4)", // siyah ve 0.2 transparan
+    borderRadius: 12, // eğer card borderRadius varsa overlay de uyumlu olsun
   },
   titleWrapper: {
     paddingHorizontal: 8,
@@ -93,9 +121,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     fontFamily: "GreatVibes", // burası el yazısı
-    textShadowColor: '#000',
+    textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+    textTransform: 'capitalize',
   },
 });
 

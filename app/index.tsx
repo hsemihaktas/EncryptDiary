@@ -84,14 +84,14 @@ export default function PasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "#f0e6d2" },
+  container: { flex: 1, justifyContent: "center", padding: 20, backgroundColor: "#f9f9f9" },
 
   appName: {
     fontFamily: "GreatVibes-Regular",
     fontSize: 48,
     textAlign: "center",
     marginBottom: 30,
-    color: "#007bff",
+    color: "#1782c9ff",
   },
 
   title: { fontSize: 22, textAlign: "center", marginBottom: 20, fontWeight: "bold", color: "#000" },

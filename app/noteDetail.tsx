@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ImageBackground,
   Modal,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import LinedPaper from "../components/LinedPaper";
 import { useNotes } from "../context/NotesContext";
 import { decryptNote } from "../utils/crypto";
 
@@ -119,7 +119,7 @@ export default function NoteDetailScreen() {
     sessionPassword && storedPassword && sessionPassword === storedPassword;
 
   return (
-    <View style={[styles.container, { backgroundColor: "#f0e6d2" }]}>
+    <View style={[styles.container,]}>
       {/* Geri */}
       <TouchableOpacity
         style={[styles.backButton]}
@@ -153,39 +153,38 @@ export default function NoteDetailScreen() {
       )}
 
       {/* Kağıt dokulu arkaplanlı kutu */}
-      <ImageBackground
-        source={require("../assets/images/paper_texture.png")}
-        style={{
-          width: "100%",
-          minHeight: "70%",
-          marginVertical: 20,
-        }}
-        imageStyle={{
-          resizeMode: "cover", // resmi tamamen kaplasın
-          width: "100%",
-        }}
-      >
-        <View style={{ flex: 1, padding: 20 }}>
-          {/* Başlık */}
-          <TextInput
-            style={[styles.titleInput, { color: "#000" }]}
-            placeholder="Başlık"
-            placeholderTextColor="#666"
-            editable={isEditing && !!canEdit}
-            value={loaded ? title : ""}
-            onChangeText={setTitle}
-          />
+      <View style={styles.noteWrapper}>
+        <LinedPaper>
+          <View
+            style={{
+              flex: 1,
+              paddingVertical: 16,
+              paddingRight: 20,
+              paddingLeft: 36,
+            }}
+          >
+            {/* Başlık */}
+            <TextInput
+              style={[styles.titleInput, { color: "#000" }]}
+              placeholder="Başlık"
+              placeholderTextColor="#666"
+              editable={isEditing && !!canEdit}
+              value={loaded ? title : ""}
+              onChangeText={setTitle}
+            />
 
-          {/* İçerik */}
-          <TextInput
-            style={[styles.input, { color: "#000" }]}
-            multiline
-            editable={isEditing && !!canEdit}
-            value={loaded ? noteText : ""}
-            onChangeText={setNoteText}
-          />
-        </View>
-      </ImageBackground>
+            {/* İçerik */}
+            <TextInput
+              style={[styles.input, { color: "#000" }]}
+              multiline
+              textAlignVertical="top"
+              editable={isEditing && !!canEdit}
+              value={loaded ? noteText : ""}
+              onChangeText={setNoteText}
+            />
+          </View>
+        </LinedPaper>
+      </View>
 
       {/* Confirm Modal */}
       {canEdit && (
@@ -224,50 +223,41 @@ export default function NoteDetailScreen() {
     </View>
   );
 }
+const LINE_HEIGHT = 28; // LinedPaper ile aynı olmalı
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0e6d2",
-    justifyContent: "center", // ortalama
-    alignItems: "center", // ortalama
+    backgroundColor: "#f9f9f9",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   noteWrapper: {
     width: "100%",
     minHeight: "70%",
-    marginVertical: 20,
-    padding: 20,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
     elevation: 6,
+      borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#fffef7",
   },
-  noteBg: {
-    resizeMode: "cover",
-    width: "100%",
-    height: "100%",
-  },
+  // noteBg tamamen kalktı
+
   titleInput: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 12,
-    lineHeight: 28,
+    marginTop:15,
+    lineHeight: 30,
     letterSpacing: 0.5,
-    textTransform: "uppercase", // büyük harf
-    textAlign: "center", // ortala
+    textAlign: "center",
   },
   input: {
     flex: 1,
     fontSize: 16,
-    textAlignVertical: "top",
-    lineHeight: 24,
+    lineHeight: LINE_HEIGHT, // 👈 çizgilerle hizalama
     letterSpacing: 0.3,
   },
+
   topButton: {
     padding: 8,
     borderRadius: 50,
@@ -275,10 +265,7 @@ const styles = StyleSheet.create({
     minWidth: 48,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+
     elevation: 6,
   },
   disabledButton: { backgroundColor: "#8b0000", opacity: 0.9 },

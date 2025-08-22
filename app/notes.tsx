@@ -86,7 +86,7 @@ export default function NotesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 20, backgroundColor: "#f0e6d2" },
+  container: { flex: 1, paddingTop: 20, backgroundColor: "#f9f9f9" },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     paddingHorizontal: 20,
   },
-  header: { fontSize: 28, fontWeight: "bold", color: "#5a3e1b" },
+  header: { fontSize: 28, fontWeight: "bold", color: "#1782c9ff" },
   logoutButton: { padding: 5 },
   notesContainer: {
     flexDirection: "row",
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#a0522d",
+    backgroundColor: "#1782c9ff",
     elevation: 8,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
