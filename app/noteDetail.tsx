@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 120,
     borderRadius: 8,
-    resizeMode: "cover",
+    resizeMode: "contain",
   },
   removeCoverImageButton: {
     position: "absolute",

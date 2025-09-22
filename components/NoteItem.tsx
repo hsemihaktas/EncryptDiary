@@ -54,7 +54,7 @@ const NoteItem: React.FC<NoteItemProps> = ({
     const decrypt = async () => {
       setCoverImageUri(null);
       setImageCount(0);
-      
+
       try {
         const title = item.encTitle
           ? await decryptNote(item.encTitle, password)
@@ -71,11 +71,6 @@ const NoteItem: React.FC<NoteItemProps> = ({
           }
         } else {
           setCoverImageUri(null);
-        }
-
-        // Resim sayısını belirle
-        if (item.encImages && item.encImages.length > 0) {
-          setImageCount(item.encImages.length);
         }
       } catch (err) {
         setDecryptedTitle("🔒 Şifre çözülmedi");
@@ -94,15 +89,15 @@ const NoteItem: React.FC<NoteItemProps> = ({
   // URI validation fonksiyonu
   const isValidUri = (uri: string | null): boolean => {
     if (!uri || uri.trim() === "") return false;
-    
+
     // URI format kontrolü - gerçek URI mi yoksa garbled text mi?
     const uriPattern = /^(file:\/\/|content:\/\/|https?:\/\/)/;
     const isValidFormat = uriPattern.test(uri);
-    
+
     // Garbled text kontrolü - çok fazla özel karakter varsa geçersiz
     const specialCharCount = (uri.match(/[^a-zA-Z0-9._\-\/:#]/g) || []).length;
     const isNotGarbled = specialCharCount < uri.length * 0.3;
-    
+
     return isValidFormat && isNotGarbled;
   };
 
@@ -124,7 +119,7 @@ const NoteItem: React.FC<NoteItemProps> = ({
           styles.cardİmage,
           shouldUseDefaultCover
             ? { resizeMode: "stretch" }
-            : { resizeMode: "cover" }
+            : { resizeMode: "cover" },
         ]}
       >
         <View style={styles.overlay} />
@@ -133,14 +128,6 @@ const NoteItem: React.FC<NoteItemProps> = ({
             {decryptedTitle}
           </Text>
         </View>
-        {imageCount > 0 && (
-          <View style={styles.imageIndicator}>
-            <Text style={styles.imageIndicatorText}>📷</Text>
-            {imageCount > 1 && (
-              <Text style={styles.imageCountText}>{imageCount}</Text>
-            )}
-          </View>
-        )}
       </ImageBackground>
     </Pressable>
   );
@@ -183,28 +170,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
     textTransform: "capitalize",
-  },
-  imageIndicator: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "rgba(255,255,255,0.8)",
-    borderRadius: 15,
-    minWidth: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-    paddingHorizontal: 6,
-  },
-  imageIndicatorText: {
-    fontSize: 16,
-  },
-  imageCountText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginLeft: 2,
-    color: "#333",
   },
 });
 
