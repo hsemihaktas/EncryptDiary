@@ -13,6 +13,7 @@ import { decryptNote } from "../utils/crypto";
 type NoteType = {
   encTitle: string;
   encContent: string;
+  encImages?: string[]; // şifrelenmiş resimler array'i
 };
 
 type NoteItemProps = {
@@ -29,6 +30,7 @@ const NoteItem: React.FC<NoteItemProps> = ({
   openEditModal,
 }) => {
   const [decryptedTitle, setDecryptedTitle] = useState<string>("");
+  const [imageCount, setImageCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [fontLoaded, setFontLoaded] = useState(false);
 
@@ -53,6 +55,11 @@ const NoteItem: React.FC<NoteItemProps> = ({
           ? await decryptNote(item.encTitle, password)
           : "Başlık yok";
         setDecryptedTitle(title);
+
+        // Resim sayısını belirle
+        if (item.encImages && item.encImages.length > 0) {
+          setImageCount(item.encImages.length);
+        }
       } catch (err) {
         console.error("Decrypt error:", err, "Item:", item);
         setDecryptedTitle("🔒 Şifre çözülmedi");
@@ -82,6 +89,14 @@ const NoteItem: React.FC<NoteItemProps> = ({
             {decryptedTitle}
           </Text>
         </View>
+        {imageCount > 0 && (
+          <View style={styles.imageIndicator}>
+            <Text style={styles.imageIndicatorText}>📷</Text>
+            {imageCount > 1 && (
+              <Text style={styles.imageCountText}>{imageCount}</Text>
+            )}
+          </View>
+        )}
       </ImageBackground>
     </Pressable>
   );
@@ -124,7 +139,29 @@ const styles = StyleSheet.create({
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
+  },
+  imageIndicator: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 15,
+    minWidth: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    paddingHorizontal: 6,
+  },
+  imageIndicatorText: {
+    fontSize: 16,
+  },
+  imageCountText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginLeft: 2,
+    color: "#333",
   },
 });
 

@@ -37,9 +37,13 @@ export default function NotesScreen() {
     router.replace("/");
   };
 
-  const handleAddNote = async (title: string, text: string) => {
+  const handleAddNote = async (
+    title: string,
+    text: string,
+    imageUris?: string[]
+  ) => {
     if (!sessionPassword) return;
-    await addNote(title, text, sessionPassword);
+    await addNote(title, text, sessionPassword, imageUris);
     setModalVisible(false);
   };
 
@@ -70,11 +74,16 @@ export default function NotesScreen() {
       </ScrollView>
 
       {/* Sağ alt + butonu sadece şifreler aynıysa */}
-      {sessionPassword && storedPassword && sessionPassword === storedPassword && (
-        <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-          <MaterialIcons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
-      )}
+      {sessionPassword &&
+        storedPassword &&
+        sessionPassword === storedPassword && (
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => setModalVisible(true)}
+          >
+            <MaterialIcons name="add" size={28} color="#fff" />
+          </TouchableOpacity>
+        )}
 
       <ModalAddNote
         visible={modalVisible}
@@ -101,7 +110,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingBottom: 20,
   },
   fab: {

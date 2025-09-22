@@ -5,16 +5,23 @@ import { encryptNote } from "../utils/crypto";
 type NoteType = {
   encTitle: string; // şifrelenmiş başlık
   encContent: string; // şifrelenmiş içerik
+  encImages?: string[]; // şifrelenmiş resimler array'i (base64)
 };
 
 type NotesContextType = {
   notes: NoteType[];
-  addNote: (title: string, text: string, password: string) => Promise<void>;
+  addNote: (
+    title: string,
+    text: string,
+    password: string,
+    imageUris?: string[]
+  ) => Promise<void>;
   editNote: (
     index: number,
     title: string,
     text: string,
-    password: string
+    password: string,
+    imageUris?: string[]
   ) => Promise<void>;
   deleteNote: (index: number) => Promise<void>;
   reloadNotes: () => Promise<void>;
@@ -37,10 +44,25 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
     await AsyncStorage.setItem("SECURE_NOTES", JSON.stringify(newNotes));
   };
 
-  const addNote = async (title: string, text: string, password: string) => {
+  const addNote = async (
+    title: string,
+    text: string,
+    password: string,
+    imageUris?: string[]
+  ) => {
     const encTitle = await encryptNote(title, password);
     const encContent = await encryptNote(text, password);
-    const newNote: NoteType = { encTitle, encContent };
+
+    let encImages: string[] | undefined;
+    if (imageUris && imageUris.length > 0) {
+      encImages = [];
+      for (const imageUri of imageUris) {
+        const encImage = await encryptNote(imageUri, password);
+        encImages.push(encImage);
+      }
+    }
+
+    const newNote: NoteType = { encTitle, encContent, encImages };
     await saveNotes([...notes, newNote]);
   };
 
@@ -48,12 +70,23 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
     index: number,
     title: string,
     text: string,
-    password: string
+    password: string,
+    imageUris?: string[]
   ) => {
     const encTitle = await encryptNote(title, password);
     const encContent = await encryptNote(text, password);
+
+    let encImages: string[] | undefined;
+    if (imageUris && imageUris.length > 0) {
+      encImages = [];
+      for (const imageUri of imageUris) {
+        const encImage = await encryptNote(imageUri, password);
+        encImages.push(encImage);
+      }
+    }
+
     const updated = [...notes];
-    updated[index] = { encTitle, encContent };
+    updated[index] = { encTitle, encContent, encImages };
     await saveNotes(updated);
   };
 
