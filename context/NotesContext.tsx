@@ -6,6 +6,7 @@ type NoteType = {
   encTitle: string; // şifrelenmiş başlık
   encContent: string; // şifrelenmiş içerik
   encImages?: string[]; // şifrelenmiş resimler array'i (base64)
+  encCoverImage?: string; // şifrelenmiş kapak fotoğrafı (base64)
 };
 
 type NotesContextType = {
@@ -14,14 +15,16 @@ type NotesContextType = {
     title: string,
     text: string,
     password: string,
-    imageUris?: string[]
+    imageUris?: string[],
+    coverImageUri?: string
   ) => Promise<void>;
   editNote: (
     index: number,
     title: string,
     text: string,
     password: string,
-    imageUris?: string[]
+    imageUris?: string[],
+    coverImageUri?: string
   ) => Promise<void>;
   deleteNote: (index: number) => Promise<void>;
   reloadNotes: () => Promise<void>;
@@ -48,7 +51,8 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
     title: string,
     text: string,
     password: string,
-    imageUris?: string[]
+    imageUris?: string[],
+    coverImageUri?: string
   ) => {
     const encTitle = await encryptNote(title, password);
     const encContent = await encryptNote(text, password);
@@ -62,7 +66,17 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
 
-    const newNote: NoteType = { encTitle, encContent, encImages };
+    let encCoverImage: string | undefined;
+    if (coverImageUri) {
+      encCoverImage = await encryptNote(coverImageUri, password);
+    }
+
+    const newNote: NoteType = {
+      encTitle,
+      encContent,
+      encImages,
+      encCoverImage,
+    };
     await saveNotes([...notes, newNote]);
   };
 
@@ -71,7 +85,8 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
     title: string,
     text: string,
     password: string,
-    imageUris?: string[]
+    imageUris?: string[],
+    coverImageUri?: string
   ) => {
     const encTitle = await encryptNote(title, password);
     const encContent = await encryptNote(text, password);
@@ -85,8 +100,16 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
 
+    let encCoverImage: string | undefined;
+    if (coverImageUri) {
+      encCoverImage = await encryptNote(coverImageUri, password);
+    } else {
+      // Eğer yeni kapak fotoğrafı verilmediyse, eski kapak fotoğrafını koru
+      encCoverImage = notes[index].encCoverImage;
+    }
+
     const updated = [...notes];
-    updated[index] = { encTitle, encContent, encImages };
+    updated[index] = { encTitle, encContent, encImages, encCoverImage };
     await saveNotes(updated);
   };
 

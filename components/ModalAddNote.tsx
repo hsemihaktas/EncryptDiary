@@ -18,7 +18,12 @@ import LinedPaper from "./LinedPaper";
 type ModalAddNoteProps = {
   visible: boolean;
   onClose: () => void;
-  onSave: (title: string, text: string, imageUris?: string[]) => Promise<void>;
+  onSave: (
+    title: string,
+    text: string,
+    imageUris?: string[],
+    coverImageUri?: string
+  ) => Promise<void>;
 };
 
 const { width, height } = Dimensions.get("window");
@@ -31,6 +36,7 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [imageUris, setImageUris] = useState<string[]>([]);
+  const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -38,6 +44,7 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
       setTitle("");
       setText("");
       setImageUris([]);
+      setCoverImageUri(null);
       setCurrentImageIndex(0);
     }
   }, [visible]);
@@ -81,6 +88,54 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
     ]);
   };
 
+  // Kapak fotoğrafı için fonksiyonlar
+  const pickCoverImageFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setCoverImageUri(result.assets[0].uri);
+    }
+  };
+
+  const pickCoverImageFromCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Uyarı", "Kamera izni gerekli!");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setCoverImageUri(result.assets[0].uri);
+    }
+  };
+
+  const showCoverImagePicker = () => {
+    Alert.alert(
+      "Kapak Fotoğrafı Seç",
+      "Kapak fotoğrafını nereden seçmek istiyorsunuz?",
+      [
+        { text: "Galeri", onPress: pickCoverImageFromGallery },
+        { text: "Kamera", onPress: pickCoverImageFromCamera },
+        { text: "İptal", style: "cancel" },
+      ]
+    );
+  };
+
+  const removeCoverImage = () => {
+    setCoverImageUri(null);
+  };
+
   const removeImage = (index: number) => {
     const newImageUris = imageUris.filter((_, i) => i !== index);
     setImageUris(newImageUris);
@@ -108,15 +163,23 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
   };
 
   const handleSave = async () => {
-    if (!text.trim() && !title.trim() && imageUris.length === 0) return;
+    if (
+      !text.trim() &&
+      !title.trim() &&
+      imageUris.length === 0 &&
+      !coverImageUri
+    )
+      return;
     await onSave(
       title.trim(),
       text.trim(),
-      imageUris.length > 0 ? imageUris : undefined
+      imageUris.length > 0 ? imageUris : undefined,
+      coverImageUri || undefined
     );
     setTitle("");
     setText("");
     setImageUris([]);
+    setCoverImageUri(null);
     onClose();
   };
 
@@ -125,6 +188,35 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
       <View style={styles.overlay}>
         <View style={styles.paperWrapper}>
           <LinedPaper>
+            {/* Kapak Fotoğrafı Alanı */}
+            <View style={styles.coverImageSection}>
+              <Text style={styles.sectionTitle}>Kapak Fotoğrafı</Text>
+              {coverImageUri ? (
+                <View style={styles.coverImageContainer}>
+                  <Image
+                    source={{ uri: coverImageUri }}
+                    style={styles.coverImagePreview}
+                  />
+                  <TouchableOpacity
+                    style={styles.removeCoverImageButton}
+                    onPress={removeCoverImage}
+                  >
+                    <Ionicons name="close-circle" size={24} color="#ff4444" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.addCoverImageButton}
+                  onPress={showCoverImagePicker}
+                >
+                  <Ionicons name="image" size={32} color="#666" />
+                  <Text style={styles.addCoverImageText}>
+                    Kapak Fotoğrafı Yükle
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
             {/* Başlık input */}
             <TextInput
               style={[
@@ -262,13 +354,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 28,
     textAlignVertical: "top",
-    marginTop: 24,
     marginBottom: 12,
     borderColor: "#ccc",
   },
   inputText: {
     flex: 1,
-    paddingVertical: 12,
     paddingHorizontal: 28,
     textAlignVertical: "top",
     borderColor: "#ccc",
@@ -340,6 +430,51 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 10,
     color: "#666",
+    fontWeight: "500",
+  },
+  // Kapak fotoğrafı stilleri
+  coverImageSection: {
+    paddingHorizontal: 28,
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  coverImageContainer: {
+    position: "relative",
+    alignItems: "center",
+  },
+  coverImagePreview: {
+    width: "100%",
+    height: 120,
+    borderRadius: 8,
+    resizeMode: "contain",
+  },
+  removeCoverImageButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "white",
+    borderRadius: 12,
+  },
+  addCoverImageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 6,
+    borderWidth: 2,
+    borderColor: "#ddd",
+    borderStyle: "dashed",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  addCoverImageText: {
+    marginLeft: 8,
+    color: "#666",
+    fontSize: 12,
     fontWeight: "500",
   },
   buttons: {

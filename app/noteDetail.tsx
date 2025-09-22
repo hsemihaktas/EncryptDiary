@@ -1,4 +1,4 @@
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -31,6 +31,7 @@ export default function NoteDetailScreen() {
   const [title, setTitle] = useState("");
   const [noteText, setNoteText] = useState("");
   const [imageUris, setImageUris] = useState<string[]>([]);
+  const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
   const [storedPassword, setStoredPassword] = useState<string | null>(null);
@@ -80,22 +81,32 @@ export default function NoteDetailScreen() {
 
           // Resimler varsa çözümle
           if ((n as NoteV2).encImages && (n as NoteV2).encImages!.length > 0) {
-            console.log(
-              "Found images to decrypt:",
-              (n as NoteV2).encImages!.length
-            );
             const decryptedImages: string[] = [];
             for (const encImage of (n as NoteV2).encImages!) {
               const decImage = await decryptNote(encImage, password);
               decryptedImages.push(decImage);
             }
-            console.log("Decrypted images:", decryptedImages.length);
             setImageUris(decryptedImages);
             setCurrentImageIndex(0); // Yeni resimler yüklenince index'i sıfırla
           } else {
-            console.log("No images found for this note");
             setImageUris([]);
             setCurrentImageIndex(0);
+          }
+
+          // Kapak fotoğrafı varsa çözümle
+          if ((n as any).encCoverImage) {
+            try {
+              const decCoverImage = await decryptNote(
+                (n as any).encCoverImage,
+                password
+              );
+              setCoverImageUri(decCoverImage);
+            } catch (err) {
+              console.error("Cover image decrypt error:", err);
+              setCoverImageUri(null);
+            }
+          } else {
+            setCoverImageUri(null);
           }
         } else {
           throw new Error("Unknown note shape");
@@ -120,7 +131,8 @@ export default function NoteDetailScreen() {
         title,
         noteText,
         sessionPassword,
-        imageUris.length > 0 ? imageUris : undefined
+        imageUris.length > 0 ? imageUris : undefined,
+        coverImageUri || undefined // kapak fotoğrafını gönder
       );
       setIsEditing(false);
     } catch (e) {
@@ -201,6 +213,54 @@ export default function NoteDetailScreen() {
     setCurrentImageIndex(finalIndex);
   };
 
+  // Kapak fotoğrafı yönetimi
+  const pickCoverImageFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setCoverImageUri(result.assets[0].uri);
+    }
+  };
+
+  const pickCoverImageFromCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Uyarı", "Kamera izni gerekli!");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setCoverImageUri(result.assets[0].uri);
+    }
+  };
+
+  const showCoverImagePicker = () => {
+    Alert.alert(
+      "Kapak Fotoğrafı Seç",
+      "Kapak fotoğrafını nereden seçmek istiyorsunuz?",
+      [
+        { text: "Galeri", onPress: pickCoverImageFromGallery },
+        { text: "Kamera", onPress: pickCoverImageFromCamera },
+        { text: "İptal", style: "cancel" },
+      ]
+    );
+  };
+
+  const removeCoverImage = () => {
+    setCoverImageUri(null);
+  };
+
   const handleDelete = async () => {
     if (isNaN(noteIndex) || noteIndex < 0 || noteIndex >= notes.length) return;
     try {
@@ -263,6 +323,37 @@ export default function NoteDetailScreen() {
               paddingLeft: 36,
             }}
           >
+            {/* Kapak Fotoğrafı Düzenleme Alanı */}
+            {isEditing && canEdit && (
+              <View style={styles.coverImageSection}>
+                <Text style={styles.sectionTitle}>Kapak Fotoğrafı</Text>
+                {coverImageUri ? (
+                  <View style={styles.coverImageContainer}>
+                    <Image
+                      source={{ uri: coverImageUri }}
+                      style={styles.coverImagePreview}
+                    />
+                    <TouchableOpacity
+                      style={styles.removeCoverImageButton}
+                      onPress={removeCoverImage}
+                    >
+                      <Ionicons name="close-circle" size={24} color="#ff4444" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.addCoverImageButton}
+                    onPress={showCoverImagePicker}
+                  >
+                    <Ionicons name="image" size={32} color="#666" />
+                    <Text style={styles.addCoverImageText}>
+                      Kapak Fotoğrafı Seç
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
             {/* Başlık */}
             <TextInput
               style={[styles.titleInput, { color: "#000" }]}
@@ -539,6 +630,52 @@ const styles = StyleSheet.create({
   },
   modalText: { fontSize: 18, marginBottom: 20, textAlign: "center" },
   modalButtons: { flexDirection: "row", justifyContent: "space-between" },
+  // Kapak fotoğrafı stilleri
+  coverImageSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  coverImageContainer: {
+    position: "relative",
+    alignItems: "center",
+  },
+  coverImagePreview: {
+    width: "100%",
+    height: 120,
+    borderRadius: 8,
+    resizeMode: "cover",
+  },
+  removeCoverImageButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "white",
+    borderRadius: 12,
+  },
+  addCoverImageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    borderWidth: 2,
+    borderColor: "#ddd",
+    borderStyle: "dashed",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  addCoverImageText: {
+    marginLeft: 8,
+    color: "#666",
+    fontSize: 16,
+    fontWeight: "500",
+  },
   modalBtn: {
     flex: 1,
     marginHorizontal: 5,

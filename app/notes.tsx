@@ -40,10 +40,11 @@ export default function NotesScreen() {
   const handleAddNote = async (
     title: string,
     text: string,
-    imageUris?: string[]
+    imageUris?: string[],
+    coverImageUri?: string
   ) => {
     if (!sessionPassword) return;
-    await addNote(title, text, sessionPassword, imageUris);
+    await addNote(title, text, sessionPassword, imageUris, coverImageUri);
     setModalVisible(false);
   };
 

@@ -14,6 +14,7 @@ type NoteType = {
   encTitle: string;
   encContent: string;
   encImages?: string[]; // şifrelenmiş resimler array'i
+  encCoverImage?: string; // şifrelenmiş kapak fotoğrafı
 };
 
 type NoteItemProps = {
@@ -31,6 +32,7 @@ const NoteItem: React.FC<NoteItemProps> = ({
 }) => {
   const [decryptedTitle, setDecryptedTitle] = useState<string>("");
   const [imageCount, setImageCount] = useState<number>(0);
+  const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [fontLoaded, setFontLoaded] = useState(false);
 
@@ -50,19 +52,35 @@ const NoteItem: React.FC<NoteItemProps> = ({
 
   useEffect(() => {
     const decrypt = async () => {
+      setCoverImageUri(null);
+      setImageCount(0);
+      
       try {
         const title = item.encTitle
           ? await decryptNote(item.encTitle, password)
           : "Başlık yok";
         setDecryptedTitle(title);
 
+        // Kapak fotoğrafını çöz
+        if (item.encCoverImage) {
+          try {
+            const coverUri = await decryptNote(item.encCoverImage, password);
+            setCoverImageUri(coverUri);
+          } catch (err) {
+            setCoverImageUri(null);
+          }
+        } else {
+          setCoverImageUri(null);
+        }
+
         // Resim sayısını belirle
         if (item.encImages && item.encImages.length > 0) {
           setImageCount(item.encImages.length);
         }
       } catch (err) {
-        console.error("Decrypt error:", err, "Item:", item);
         setDecryptedTitle("🔒 Şifre çözülmedi");
+        setCoverImageUri(null);
+        setImageCount(0);
       } finally {
         setLoading(false);
       }
@@ -73,15 +91,41 @@ const NoteItem: React.FC<NoteItemProps> = ({
   if (loading || !fontLoaded)
     return <ActivityIndicator style={{ marginVertical: 12 }} color="#000" />;
 
+  // URI validation fonksiyonu
+  const isValidUri = (uri: string | null): boolean => {
+    if (!uri || uri.trim() === "") return false;
+    
+    // URI format kontrolü - gerçek URI mi yoksa garbled text mi?
+    const uriPattern = /^(file:\/\/|content:\/\/|https?:\/\/)/;
+    const isValidFormat = uriPattern.test(uri);
+    
+    // Garbled text kontrolü - çok fazla özel karakter varsa geçersiz
+    const specialCharCount = (uri.match(/[^a-zA-Z0-9._\-\/:#]/g) || []).length;
+    const isNotGarbled = specialCharCount < uri.length * 0.3;
+    
+    return isValidFormat && isNotGarbled;
+  };
+
+  const shouldUseDefaultCover = !coverImageUri || !isValidUri(coverImageUri);
+
   return (
     <Pressable
       style={styles.cardContainer}
       onPress={() => openEditModal(index, decryptedTitle)}
     >
       <ImageBackground
-        source={require("../assets/images/cover_texture.png")}
+        source={
+          shouldUseDefaultCover
+            ? require("../assets/images/cover_texture.png")
+            : { uri: coverImageUri! }
+        }
         style={styles.card}
-        imageStyle={styles.cardİmage}
+        imageStyle={[
+          styles.cardİmage,
+          shouldUseDefaultCover
+            ? { resizeMode: "stretch" }
+            : { resizeMode: "cover" }
+        ]}
       >
         <View style={styles.overlay} />
         <View style={styles.titleWrapper}>
@@ -117,7 +161,6 @@ const styles = StyleSheet.create({
   cardİmage: {
     width: "100%",
     height: "100%",
-    resizeMode: "stretch",
     borderRadius: 12,
   },
   overlay: {
