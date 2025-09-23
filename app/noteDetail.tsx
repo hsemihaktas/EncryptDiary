@@ -17,12 +17,7 @@ import {
 import LinedPaper from "../components/LinedPaper";
 import { useNotes } from "../context/NotesContext";
 import { useTheme } from "../context/ThemeContext";
-import { decryptNote } from "../utils/crypto";
-
-type LegacyNoteV0 = string; // eski sadece içerik
-type LegacyNoteV1 = { encContent: string }; // ara sürüm
-type NoteV2 = { encTitle: string; encContent: string; encImages?: string[] }; // yeni - çoklu fotoğraf desteği
-type AnyNote = LegacyNoteV0 | LegacyNoteV1 | NoteV2;
+// Artık decrypt'e gerek yok - NotesContext direkt veri sağlıyor
 
 export default function NoteDetailScreen() {
   const { index } = useLocalSearchParams<{ index: string }>();
@@ -52,74 +47,21 @@ export default function NoteDetailScreen() {
       const stored = await AsyncStorage.getItem("user_password"); // kullanıcı şifresi
       setStoredPassword(stored);
 
-      const n: AnyNote | undefined = notes[noteIndex] as any;
+      // Yeni sistemde notlar direkt alınır (doğru şifre ise düz metin, yanlış ise şifreli)
+      const note = notes[noteIndex];
 
-      if (!password || typeof noteIndex !== "number" || !n) {
+      if (typeof noteIndex !== "number" || !note) {
         setLoaded(true);
         return;
       }
 
-      try {
-        if (typeof n === "string") {
-          const decContent = await decryptNote(n, password);
-          setTitle("");
-          setNoteText(decContent);
-        } else if ("encContent" in n && !("encTitle" in n)) {
-          const decContent = await decryptNote(
-            (n as LegacyNoteV1).encContent,
-            password
-          );
-          setTitle("");
-          setNoteText(decContent);
-        } else if ("encTitle" in n && "encContent" in n) {
-          const decTitle = (n as NoteV2).encTitle
-            ? await decryptNote((n as NoteV2).encTitle, password)
-            : "";
-          const decContent = (n as NoteV2).encContent
-            ? await decryptNote((n as NoteV2).encContent, password)
-            : "";
-          setTitle(decTitle);
-          setNoteText(decContent);
-
-          // Resimler varsa çözümle
-          if ((n as NoteV2).encImages && (n as NoteV2).encImages!.length > 0) {
-            const decryptedImages: string[] = [];
-            for (const encImage of (n as NoteV2).encImages!) {
-              const decImage = await decryptNote(encImage, password);
-              decryptedImages.push(decImage);
-            }
-            setImageUris(decryptedImages);
-            setCurrentImageIndex(0); // Yeni resimler yüklenince index'i sıfırla
-          } else {
-            setImageUris([]);
-            setCurrentImageIndex(0);
-          }
-
-          // Kapak fotoğrafı varsa çözümle
-          if ((n as any).encCoverImage) {
-            try {
-              const decCoverImage = await decryptNote(
-                (n as any).encCoverImage,
-                password
-              );
-              setCoverImageUri(decCoverImage);
-            } catch (err) {
-              console.error("Cover image decrypt error:", err);
-              setCoverImageUri(null);
-            }
-          } else {
-            setCoverImageUri(null);
-          }
-        } else {
-          throw new Error("Unknown note shape");
-        }
-      } catch (e) {
-        console.warn("Decrypt error:", e);
-        setTitle("");
-        setNoteText("");
-      } finally {
-        setLoaded(true);
-      }
+      // NotesContext'ten gelen veriyi direkt kullan
+      setTitle(note.title || "");
+      setNoteText(note.content || "");
+      setImageUris(note.images || []);
+      setCoverImageUri(note.coverImage || null);
+      setCurrentImageIndex(0);
+      setLoaded(true);
     };
 
     loadSessionAndNote();
@@ -132,7 +74,6 @@ export default function NoteDetailScreen() {
         noteIndex,
         title,
         noteText,
-        sessionPassword,
         imageUris.length > 0 ? imageUris : undefined,
         coverImageUri || undefined // kapak fotoğrafını gönder
       );

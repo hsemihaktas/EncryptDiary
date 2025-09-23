@@ -1,12 +1,21 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { encryptNote } from "../utils/crypto";
+import React, { createContext, useCallback, useContext, useState } from "react";
+import { createGarbledText } from "../utils/crypto";
 
 type NoteType = {
-  encTitle: string; // şifrelenmiş başlık
-  encContent: string; // şifrelenmiş içerik
-  encImages?: string[]; // şifrelenmiş resimler array'i (base64)
-  encCoverImage?: string; // şifrelenmiş kapak fotoğrafı (base64)
+  title: string; // normal başlık (doğru şifre) veya şifreli başlık (yanlış şifre)
+  content: string; // normal içerik (doğru şifre) veya şifreli içerik (yanlış şifre)
+  images?: string[]; // normal resimler (doğru şifre) veya şifreli resimler (yanlış şifre)
+  coverImage?: string; // normal kapak (doğru şifre) veya şifreli kapak (yanlış şifre)
+  imageCount?: number; // resim sayısı
+};
+
+type StoredNoteType = {
+  title: string; // her zaman düz metin olarak saklanır
+  content: string; // her zaman düz metin olarak saklanır
+  images?: string[]; // her zaman düz metin olarak saklanır
+  coverImage?: string; // her zaman düz metin olarak saklanır
+  imageCount?: number;
 };
 
 type NotesContextType = {
@@ -14,7 +23,6 @@ type NotesContextType = {
   addNote: (
     title: string,
     text: string,
-    password: string,
     imageUris?: string[],
     coverImageUri?: string
   ) => Promise<void>;
@@ -22,12 +30,14 @@ type NotesContextType = {
     index: number,
     title: string,
     text: string,
-    password: string,
     imageUris?: string[],
     coverImageUri?: string
   ) => Promise<void>;
   deleteNote: (index: number) => Promise<void>;
-  reloadNotes: () => Promise<void>;
+  loadNotesWithPassword: (
+    sessionPassword: string,
+    correctPassword: string
+  ) => Promise<void>;
 };
 
 const NotesContext = createContext<NotesContextType | undefined>(undefined);
@@ -37,101 +47,171 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [notes, setNotes] = useState<NoteType[]>([]);
 
-  const loadNotes = async () => {
-    const stored = await AsyncStorage.getItem("SECURE_NOTES");
-    if (stored) setNotes(JSON.parse(stored));
+  const saveRawNotes = async (rawNotes: StoredNoteType[]) => {
+    await AsyncStorage.setItem("plain_notes", JSON.stringify(rawNotes));
   };
 
-  const saveNotes = async (newNotes: NoteType[]) => {
-    setNotes(newNotes);
-    await AsyncStorage.setItem("SECURE_NOTES", JSON.stringify(newNotes));
+  const loadRawNotes = async (): Promise<StoredNoteType[]> => {
+    const stored = await AsyncStorage.getItem("plain_notes");
+    return stored ? JSON.parse(stored) : [];
   };
 
-  const addNote = async (
-    title: string,
-    text: string,
-    password: string,
-    imageUris?: string[],
-    coverImageUri?: string
-  ) => {
-    const encTitle = await encryptNote(title, password);
-    const encContent = await encryptNote(text, password);
+  const loadNotesWithPassword = useCallback(
+    async (sessionPassword: string, correctPassword: string) => {
+      const rawNotes = await loadRawNotes();
 
-    let encImages: string[] | undefined;
-    if (imageUris && imageUris.length > 0) {
-      encImages = [];
-      for (const imageUri of imageUris) {
-        const encImage = await encryptNote(imageUri, password);
-        encImages.push(encImage);
+      if (sessionPassword === correctPassword) {
+        // Doğru şifre - notları direkt göster
+        const displayNotes: NoteType[] = rawNotes.map((note) => ({
+          title: note.title,
+          content: note.content,
+          images: note.images,
+          coverImage: note.coverImage,
+          imageCount: note.imageCount || (note.images?.length ?? 0),
+        }));
+        setNotes(displayNotes);
+      } else {
+        // Yanlış şifre - her seferinde farklı garbled text oluştur
+        const garbledNotes: NoteType[] = [];
+        for (const note of rawNotes) {
+          try {
+            const garbledTitle = await createGarbledText(
+              note.title,
+              sessionPassword
+            );
+            const garbledContent = await createGarbledText(
+              note.content,
+              sessionPassword
+            );
+
+            let garbledImages: string[] | undefined;
+            if (note.images && note.images.length > 0) {
+              garbledImages = [];
+              for (const img of note.images) {
+                const garbledImg = await createGarbledText(
+                  img,
+                  sessionPassword
+                );
+                garbledImages.push(garbledImg);
+              }
+            }
+
+            let garbledCoverImage: string | undefined;
+            if (note.coverImage) {
+              garbledCoverImage = await createGarbledText(
+                note.coverImage,
+                sessionPassword
+              );
+            }
+
+            garbledNotes.push({
+              title: garbledTitle,
+              content: garbledContent,
+              images: garbledImages,
+              coverImage: garbledCoverImage,
+              imageCount: note.imageCount || 0,
+            });
+          } catch (err) {
+            // Şifreleme hatası durumunda fallback
+            garbledNotes.push({
+              title: "⚠️ Şifreleme Hatası",
+              content: "⚠️ Veri okunamadı",
+              imageCount: note.imageCount || 0,
+            });
+          }
+        }
+        setNotes(garbledNotes);
       }
-    }
+    },
+    []
+  );
 
-    let encCoverImage: string | undefined;
-    if (coverImageUri) {
-      encCoverImage = await encryptNote(coverImageUri, password);
-    }
+  const addNote = useCallback(
+    async (
+      title: string,
+      text: string,
+      imageUris?: string[],
+      coverImageUri?: string
+    ) => {
+      const rawNotes = await loadRawNotes();
 
-    const newNote: NoteType = {
-      encTitle,
-      encContent,
-      encImages,
-      encCoverImage,
-    };
-    await saveNotes([...notes, newNote]);
-  };
+      const newNote: StoredNoteType = {
+        title,
+        content: text,
+        images: imageUris,
+        coverImage: coverImageUri,
+        imageCount: imageUris?.length || 0,
+      };
 
-  const editNote = async (
-    index: number,
-    title: string,
-    text: string,
-    password: string,
-    imageUris?: string[],
-    coverImageUri?: string
-  ) => {
-    const encTitle = await encryptNote(title, password);
-    const encContent = await encryptNote(text, password);
+      const updatedRawNotes = [...rawNotes, newNote];
+      await saveRawNotes(updatedRawNotes);
 
-    let encImages: string[] | undefined;
-    if (imageUris && imageUris.length > 0) {
-      encImages = [];
-      for (const imageUri of imageUris) {
-        const encImage = await encryptNote(imageUri, password);
-        encImages.push(encImage);
+      // Current notes'u da güncelle (doğru şifre varsayımıyla)
+      const displayNote: NoteType = {
+        title,
+        content: text,
+        images: imageUris,
+        coverImage: coverImageUri,
+        imageCount: imageUris?.length || 0,
+      };
+      setNotes((prevNotes) => [...prevNotes, displayNote]);
+    },
+    []
+  );
+
+  const editNote = useCallback(
+    async (
+      index: number,
+      title: string,
+      text: string,
+      imageUris?: string[],
+      coverImageUri?: string
+    ) => {
+      const rawNotes = await loadRawNotes();
+
+      if (rawNotes[index]) {
+        rawNotes[index] = {
+          title,
+          content: text,
+          images: imageUris,
+          coverImage: coverImageUri,
+          imageCount: imageUris?.length || 0,
+        };
+
+        await saveRawNotes(rawNotes);
+
+        // Current notes'u da güncelle
+        setNotes((prevNotes) => {
+          const updatedNotes = [...prevNotes];
+          updatedNotes[index] = {
+            title,
+            content: text,
+            images: imageUris,
+            coverImage: coverImageUri,
+            imageCount: imageUris?.length || 0,
+          };
+          return updatedNotes;
+        });
       }
-    }
+    },
+    []
+  );
 
-    let encCoverImage: string | undefined;
-    if (coverImageUri) {
-      encCoverImage = await encryptNote(coverImageUri, password);
-    } else {
-      // Eğer yeni kapak fotoğrafı verilmediyse, eski kapak fotoğrafını koru
-      encCoverImage = notes[index].encCoverImage;
-    }
+  const deleteNote = useCallback(async (index: number) => {
+    const rawNotes = await loadRawNotes();
+    rawNotes.splice(index, 1);
+    await saveRawNotes(rawNotes);
 
-    const updated = [...notes];
-    updated[index] = { encTitle, encContent, encImages, encCoverImage };
-    await saveNotes(updated);
-  };
-
-  const deleteNote = async (index: number) => {
-    const newNotes = [...notes];
-    newNotes.splice(index, 1);
-    setNotes(newNotes);
-    await AsyncStorage.setItem("notes", JSON.stringify(newNotes));
-  };
-
-  const reloadNotes = async () => {
-    const stored = await AsyncStorage.getItem("SECURE_NOTES");
-    if (stored) setNotes(JSON.parse(stored));
-  };
-
-  useEffect(() => {
-    loadNotes();
+    setNotes((prevNotes) => {
+      const updatedNotes = [...prevNotes];
+      updatedNotes.splice(index, 1);
+      return updatedNotes;
+    });
   }, []);
 
   return (
     <NotesContext.Provider
-      value={{ notes, addNote, editNote, deleteNote, reloadNotes }}
+      value={{ notes, addNote, editNote, deleteNote, loadNotesWithPassword }}
     >
       {children}
     </NotesContext.Provider>

@@ -16,7 +16,7 @@ import { useNotes } from "../context/NotesContext";
 import { useTheme } from "../context/ThemeContext";
 
 export default function NotesScreen() {
-  const { notes, addNote } = useNotes();
+  const { notes, addNote, loadNotesWithPassword } = useNotes();
   const { backgroundColor, primaryColor, buttonColor } = useTheme();
   const router = useRouter();
 
@@ -30,9 +30,14 @@ export default function NotesScreen() {
       const session = await AsyncStorage.getItem("current_session_password");
       setStoredPassword(stored);
       setSessionPassword(session);
+
+      // Şifreler yüklendikten sonra notları yükle
+      if (session && stored) {
+        await loadNotesWithPassword(session, stored);
+      }
     };
     loadPasswords();
-  }, []);
+  }, [loadNotesWithPassword]);
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem("current_session_password");
@@ -45,8 +50,7 @@ export default function NotesScreen() {
     imageUris?: string[],
     coverImageUri?: string
   ) => {
-    if (!sessionPassword) return;
-    await addNote(title, text, sessionPassword, imageUris, coverImageUri);
+    await addNote(title, text, imageUris, coverImageUri);
     setModalVisible(false);
   };
 
@@ -78,7 +82,6 @@ export default function NotesScreen() {
             key={index}
             item={item}
             index={index}
-            password={sessionPassword!}
             openEditModal={(i) =>
               router.push({
                 pathname: "/noteDetail",

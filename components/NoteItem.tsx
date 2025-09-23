@@ -8,29 +8,23 @@ import {
   Text,
   View,
 } from "react-native";
-import { decryptNote } from "../utils/crypto";
 
 type NoteType = {
-  encTitle: string;
-  encContent: string;
-  encImages?: string[]; // şifrelenmiş resimler array'i
-  encCoverImage?: string; // şifrelenmiş kapak fotoğrafı
+  title: string; // artık direkt title (doğru şifre) veya şifreli title (yanlış şifre)
+  content: string; // artık direkt content (doğru şifre) veya şifreli content (yanlış şifre)
+  images?: string[]; // artık direkt images (doğru şifre) veya şifreli images (yanlış şifre)
+  coverImage?: string; // artık direkt coverImage (doğru şifre) veya şifreli coverImage (yanlış şifre)
+  imageCount?: number;
 };
 
 type NoteItemProps = {
   item: NoteType;
   index: number;
-  password: string;
   openEditModal: (index: number, text: string) => void;
 };
 
-const NoteItem: React.FC<NoteItemProps> = ({
-  item,
-  index,
-  password,
-  openEditModal,
-}) => {
-  const [decryptedTitle, setDecryptedTitle] = useState<string>("");
+const NoteItem: React.FC<NoteItemProps> = ({ item, index, openEditModal }) => {
+  const [displayTitle, setDisplayTitle] = useState<string>("");
   const [imageCount, setImageCount] = useState<number>(0);
   const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,37 +45,29 @@ const NoteItem: React.FC<NoteItemProps> = ({
   }, []);
 
   useEffect(() => {
-    const decrypt = async () => {
+    const prepareDisplay = () => {
       setCoverImageUri(null);
       setImageCount(0);
 
       try {
-        const title = item.encTitle
-          ? await decryptNote(item.encTitle, password)
-          : "Başlık yok";
-        setDecryptedTitle(title);
+        const title = item.title || "Başlık yok";
+        setDisplayTitle(title);
 
-        // Kapak fotoğrafını çöz
-        if (item.encCoverImage) {
-          try {
-            const coverUri = await decryptNote(item.encCoverImage, password);
-            setCoverImageUri(coverUri);
-          } catch (err) {
-            setCoverImageUri(null);
-          }
-        } else {
-          setCoverImageUri(null);
-        }
+        // Kapak fotoğrafını ayarla
+        setCoverImageUri(item.coverImage || null);
+
+        // Resim sayısını ayarla
+        setImageCount(item.imageCount || item.images?.length || 0);
       } catch (err) {
-        setDecryptedTitle("🔒 Şifre çözülmedi");
+        setDisplayTitle("🔒 Hata");
         setCoverImageUri(null);
         setImageCount(0);
       } finally {
         setLoading(false);
       }
     };
-    decrypt();
-  }, [item, password]);
+    prepareDisplay();
+  }, [item]);
 
   if (loading || !fontLoaded)
     return <ActivityIndicator style={{ marginVertical: 12 }} color="#000" />;
@@ -106,7 +92,7 @@ const NoteItem: React.FC<NoteItemProps> = ({
   return (
     <Pressable
       style={styles.cardContainer}
-      onPress={() => openEditModal(index, decryptedTitle)}
+      onPress={() => openEditModal(index, displayTitle)}
     >
       <ImageBackground
         source={
@@ -125,7 +111,7 @@ const NoteItem: React.FC<NoteItemProps> = ({
         <View style={styles.overlay} />
         <View style={styles.titleWrapper}>
           <Text style={styles.title} numberOfLines={2}>
-            {decryptedTitle}
+            {displayTitle}
           </Text>
         </View>
       </ImageBackground>

@@ -1,7 +1,10 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
+  Alert,
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -22,12 +25,43 @@ export default function SettingsScreen() {
     isDark,
   } = useTheme();
 
+  const [resetModalVisible, setResetModalVisible] = useState(false);
+
   const handleThemeSelect = async (themeId: string) => {
     await setTheme(themeId);
   };
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handlePasswordReset = async () => {
+    try {
+      // Tüm şifre ve session verilerini sil
+      await AsyncStorage.removeItem("user_password");
+      await AsyncStorage.removeItem("current_session_password");
+
+      Alert.alert(
+        "Başarılı",
+        "Şifre sıfırlandı. Giriş sayfasına yönlendiriliyorsunuz.",
+        [
+          {
+            text: "Tamam",
+            onPress: () => {
+              setResetModalVisible(false);
+              router.replace("/"); // Ana sayfaya yönlendir
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert("Hata", "Şifre sıfırlanırken bir hata oluştu.");
+      setResetModalVisible(false);
+    }
+  };
+
+  const showResetConfirmation = () => {
+    setResetModalVisible(true);
   };
 
   return (
@@ -93,22 +127,66 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: textColor }]}>
-            ℹ️ Bilgi
+            🔒 Güvenlik
           </Text>
-          <View
+          <Text
             style={[
-              styles.infoCard,
-              { backgroundColor: isDark ? "#3a3a3a" : "#e3f2fd" },
+              styles.sectionDescription,
+              { color: isDark ? "#ccc" : "#666" },
             ]}
           >
-            <Text
-              style={[styles.infoText, { color: isDark ? "#ccc" : "#666" }]}
-            >
-              Tema değişikliği anında aktif olur.
-            </Text>
-          </View>
+            Şifre ve veri yönetimi
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.dangerButton,
+              { backgroundColor: isDark ? "#8b0000" : "#ff4444" },
+            ]}
+            onPress={showResetConfirmation}
+          >
+            <MaterialIcons name="warning" size={24} color="#fff" />
+            <Text style={styles.dangerButtonText}>Şifreyi Sıfırla</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Reset Confirmation Modal */}
+      <Modal
+        transparent
+        visible={resetModalVisible}
+        animationType="fade"
+        onRequestClose={() => setResetModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor }]}>
+            <MaterialIcons name="warning" size={48} color="#ff4444" />
+            <Text style={[styles.modalTitle, { color: textColor }]}>
+              Şifreyi Sıfırla
+            </Text>
+            <Text
+              style={[styles.modalText, { color: isDark ? "#ccc" : "#666" }]}
+            >
+              Bu işlem geri alınamaz!{"\n\n"}• Şifreniz sıfırlanacak{"\n"}•
+              Giriş sayfasına yönlendirileceksiniz
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setResetModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>İptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handlePasswordReset}
+              >
+                <Text style={styles.confirmButtonText}>Sıfırla</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -191,14 +269,76 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
   },
-  infoCard: {
+  // Danger button styles
+  dangerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 15,
     borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#1782c9ff",
+    marginBottom: 15,
   },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 20,
+  dangerButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    margin: 20,
+    padding: 25,
+    borderRadius: 15,
+    alignItems: "center",
+    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 15,
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 25,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#ccc",
+  },
+  cancelButtonText: {
+    color: "#333",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  confirmButton: {
+    backgroundColor: "#ff4444",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
