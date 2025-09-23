@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import LinedPaper from "../components/LinedPaper";
 import { useNotes } from "../context/NotesContext";
+import { useTheme } from "../context/ThemeContext";
 import { decryptNote } from "../utils/crypto";
 
 type LegacyNoteV0 = string; // eski sadece içerik
@@ -27,6 +28,7 @@ export default function NoteDetailScreen() {
   const { index } = useLocalSearchParams<{ index: string }>();
   const noteIndex = Number(index);
   const { notes, editNote, deleteNote } = useNotes();
+  const { backgroundColor, primaryColor, buttonColor } = useTheme();
 
   const [title, setTitle] = useState("");
   const [noteText, setNoteText] = useState("");
@@ -279,13 +281,13 @@ export default function NoteDetailScreen() {
     sessionPassword && storedPassword && sessionPassword === storedPassword;
 
   return (
-    <View style={[styles.container]}>
+    <View style={[styles.container, { backgroundColor }]}>
       {/* Geri */}
       <TouchableOpacity
         style={[styles.backButton]}
         onPress={() => router.push("/notes")}
       >
-        <MaterialIcons name="arrow-back" size={28} color="#007bff" />
+        <MaterialIcons name="arrow-back" size={28} color={primaryColor} />
       </TouchableOpacity>
 
       {/* Sağ üst butonlar sadece şifre eşleşiyorsa */}
@@ -493,7 +495,6 @@ const LINE_HEIGHT = 28;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
@@ -668,7 +669,6 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderStyle: "dashed",
     borderRadius: 8,
-    backgroundColor: "#f9f9f9",
   },
   addCoverImageText: {
     marginLeft: 8,

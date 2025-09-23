@@ -13,9 +13,11 @@ import {
 import ModalAddNote from "../components/ModalAddNote";
 import NoteItem from "../components/NoteItem";
 import { useNotes } from "../context/NotesContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function NotesScreen() {
   const { notes, addNote } = useNotes();
+  const { backgroundColor, primaryColor, buttonColor } = useTheme();
   const router = useRouter();
 
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
@@ -49,12 +51,25 @@ export default function NotesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]}>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>My Journal</Text>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <MaterialIcons name="logout" size={28} color="red" />
-        </TouchableOpacity>
+        <Text style={[styles.header, { color: primaryColor }]}>My Journal</Text>
+        <View style={styles.headerButtons}>
+          {/* Settings butonu - sadece doğru şifre girildiğinde */}
+          {sessionPassword &&
+            storedPassword &&
+            sessionPassword === storedPassword && (
+              <TouchableOpacity
+                onPress={() => router.push("/settings")}
+                style={styles.settingsButton}
+              >
+                <MaterialIcons name="settings" size={28} color="#1782c9ff" />
+              </TouchableOpacity>
+            )}
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <MaterialIcons name="logout" size={28} color="red" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.notesContainer}>
@@ -79,7 +94,7 @@ export default function NotesScreen() {
         storedPassword &&
         sessionPassword === storedPassword && (
           <TouchableOpacity
-            style={styles.fab}
+            style={[styles.fab, { backgroundColor: buttonColor }]}
             onPress={() => setModalVisible(true)}
           >
             <MaterialIcons name="add" size={28} color="#fff" />
@@ -96,7 +111,7 @@ export default function NotesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 20, backgroundColor: "#f9f9f9" },
+  container: { flex: 1, paddingTop: 20 },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -105,7 +120,15 @@ const styles = StyleSheet.create({
     marginTop: 30,
     paddingHorizontal: 20,
   },
-  header: { fontSize: 28, fontWeight: "bold", color: "#1782c9ff" },
+  header: { fontSize: 28, fontWeight: "bold" },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+  },
+  settingsButton: {
+    padding: 5,
+  },
   logoutButton: { padding: 5 },
   notesContainer: {
     flexDirection: "row",
@@ -123,7 +146,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#1782c9ff",
     elevation: 8,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
