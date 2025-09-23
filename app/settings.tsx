@@ -41,19 +41,9 @@ export default function SettingsScreen() {
       await AsyncStorage.removeItem("user_password");
       await AsyncStorage.removeItem("current_session_password");
 
-      Alert.alert(
-        "Başarılı",
-        "Şifre sıfırlandı. Giriş sayfasına yönlendiriliyorsunuz.",
-        [
-          {
-            text: "Tamam",
-            onPress: () => {
-              setResetModalVisible(false);
-              router.replace("/"); // Ana sayfaya yönlendir
-            },
-          },
-        ]
-      );
+      // Modal'ı kapat ve direkt ana sayfaya git
+      setResetModalVisible(false);
+      router.replace("/"); // Ana sayfaya yönlendir
     } catch (error) {
       Alert.alert("Hata", "Şifre sıfırlanırken bir hata oluştu.");
       setResetModalVisible(false);
