@@ -341,21 +341,23 @@ export default function NoteDetailScreen() {
               </View>
             )}
 
-            {/* Başlık */}
-            <TextInput
-              style={[
-                styles.titleInput,
-                {
-                  color: "#000",
-                  fontFamily: getFontFamily(fontFamily),
-                },
-              ]}
-              placeholder=""
-              placeholderTextColor="#666"
-              editable={isEditing && !!canEdit}
-              value={loaded ? title : ""}
-              onChangeText={setTitle}
-            />
+            {/* Başlık - sadece varsa veya düzenleme modunda göster */}
+            {(title.trim() || isEditing) && (
+              <TextInput
+                style={[
+                  styles.titleInput,
+                  {
+                    color: "#000",
+                    fontFamily: getFontFamily(fontFamily),
+                  },
+                ]}
+                placeholder="Başlık"
+                placeholderTextColor="#666"
+                editable={isEditing && !!canEdit}
+                value={loaded ? title : ""}
+                onChangeText={setTitle}
+              />
+            )}
 
             {/* İçerik */}
             <TextInput
@@ -364,6 +366,8 @@ export default function NoteDetailScreen() {
                 {
                   color: "#000",
                   fontFamily: getFontFamily(fontFamily),
+                  // Başlık yoksa üstten başlat
+                  marginTop: !title.trim() && !isEditing ? 11 : 0,
                 },
               ]}
               multiline
@@ -371,6 +375,8 @@ export default function NoteDetailScreen() {
               editable={isEditing && !!canEdit}
               value={loaded ? noteText : ""}
               onChangeText={setNoteText}
+              placeholder={!title.trim() && !isEditing ? "" : "Not içeriği..."}
+              placeholderTextColor="#666"
             />
 
             {/* Fotoğraf bölümü */}
@@ -578,10 +584,12 @@ const styles = StyleSheet.create({
   titleInput: {
     fontSize: 22,
     fontWeight: "bold",
-    marginTop: 15,
+    marginTop: 6,
+    marginBottom: 8,
     lineHeight: 30,
     letterSpacing: 0.5,
     textAlign: "center",
+    textTransform: "capitalize",
   },
   input: {
     flex: 1,
