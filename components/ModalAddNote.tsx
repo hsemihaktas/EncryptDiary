@@ -173,13 +173,10 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
   };
 
   const handleSave = async () => {
-    if (
-      !text.trim() &&
-      !title.trim() &&
-      imageUris.length === 0 &&
-      !coverImageUri
-    )
+    // Note kısmına bir şey yazılmadıysa not eklemeye izin verme
+    if (!text.trim()) {
       return;
+    }
 
     await onSave(
       title.trim(),
@@ -220,8 +217,13 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
               <MaterialIcons name="close" size={24} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.iconButton, styles.saveIcon]}
+              style={[
+                styles.iconButton,
+                styles.saveIcon,
+                !text.trim() && { backgroundColor: "#ccc" },
+              ]}
               onPress={handleSave}
+              disabled={!text.trim()}
             >
               <MaterialIcons name="check" size={24} color="#fff" />
             </TouchableOpacity>
