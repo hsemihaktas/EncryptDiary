@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: 16,
     textAlign: "center",
-    lineHeight: 24,
+
     marginBottom: 25,
   },
   modalButtons: {

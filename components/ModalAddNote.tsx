@@ -206,76 +206,122 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        <View style={styles.paperWrapper}>
-          <LinedPaper>
-            {/* Kapak Fotoğrafı Alanı */}
-            <View style={styles.coverImageSection}>
-              <Text style={styles.sectionTitle}>Kapak Fotoğrafı</Text>
-              {coverImageUri ? (
-                <View style={styles.coverImageContainer}>
-                  <Image
-                    source={{ uri: coverImageUri }}
-                    style={styles.coverImagePreview}
-                  />
+        {/* Üst Grid - Butonlar ve Font Seçimi */}
+        <View style={styles.topGrid}>
+          {/* Butonlar */}
+          <View style={styles.buttonArea}>
+            <TouchableOpacity
+              style={[styles.iconButton, styles.cancelIcon]}
+              onPress={onClose}
+            >
+              <MaterialIcons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.iconButton, styles.saveIcon]}
+              onPress={handleSave}
+            >
+              <MaterialIcons name="check" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Font Seçimi */}
+          <View style={styles.fontArea}>
+            <TouchableOpacity
+              style={styles.fontSelector}
+              onPress={() => setFontPickerVisible(true)}
+            >
+              <MaterialIcons name="text-fields" size={20} color="#333" />
+              <Text
+                style={[
+                  styles.fontSelectorText,
+                  { fontFamily: getFontFamily(selectedFont) },
+                ]}
+              >
+                {getSelectedFontName()}
+              </Text>
+              <MaterialIcons
+                name="keyboard-arrow-down"
+                size={20}
+                color="#333"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Alt Grid - LinedPaper */}
+        <View style={styles.bottomGrid}>
+          <View style={styles.linedPaperContainer}>
+            <LinedPaper>
+              {/* Kapak Fotoğrafı Alanı - Sabit */}
+              <View style={styles.coverImageSection}>
+                {coverImageUri ? (
+                  <View style={styles.coverImageContainer}>
+                    <Image
+                      source={{ uri: coverImageUri }}
+                      style={styles.coverImagePreview}
+                    />
+                    <TouchableOpacity
+                      style={styles.removeCoverImageButton}
+                      onPress={removeCoverImage}
+                    >
+                      <Ionicons name="close-circle" size={24} color="#ff4444" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
                   <TouchableOpacity
-                    style={styles.removeCoverImageButton}
-                    onPress={removeCoverImage}
+                    style={styles.addCoverImageButton}
+                    onPress={showCoverImagePicker}
                   >
-                    <Ionicons name="close-circle" size={24} color="#ff4444" />
+                    <Ionicons name="image" size={32} color="#666" />
+                    <Text style={styles.addCoverImageText}>
+                      Kapak Fotoğrafı Yükle
+                    </Text>
                   </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={styles.addCoverImageButton}
-                  onPress={showCoverImagePicker}
-                >
-                  <Ionicons name="image" size={32} color="#666" />
-                  <Text style={styles.addCoverImageText}>
-                    Kapak Fotoğrafı Yükle
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+                )}
+              </View>
 
-            {/* Başlık input */}
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: "transparent",
-                  color: "#000",
-                  fontWeight: "bold",
-                  fontFamily: getFontFamily(selectedFont),
-                },
-              ]}
-              placeholder="Başlık"
-              placeholderTextColor="#666"
-              value={title}
-              onChangeText={setTitle}
-            />
+              {/* Başlık input - Sabit */}
+              <TextInput
+                style={[
+                  styles.titleInput,
+                  {
+                    backgroundColor: "transparent",
+                    color: "#000",
+                    fontWeight: "bold",
+                    fontFamily: getFontFamily(selectedFont),
+                  },
+                ]}
+                placeholder="Başlık"
+                placeholderTextColor="#666"
+                value={title}
+                onChangeText={setTitle}
+              />
 
-            {/* Yeni not input */}
-            <TextInput
-              style={[
-                styles.inputText,
-                {
-                  backgroundColor: "transparent",
-                  color: "#000",
-                  fontFamily: getFontFamily(selectedFont),
-                },
-              ]}
-              placeholder="Yeni not..."
-              placeholderTextColor="#666"
-              value={text}
-              onChangeText={setText}
-              multiline
-            />
+              {/* Yeni not input - Scrollable */}
+              <TextInput
+                style={[
+                  styles.contentInput,
+                  {
+                    backgroundColor: "transparent",
+                    color: "#000",
+                    fontFamily: getFontFamily(selectedFont),
+                  },
+                ]}
+                placeholder="Yeni not..."
+                placeholderTextColor="#666"
+                value={text}
+                onChangeText={setText}
+                multiline
+                scrollEnabled={true}
+                textAlignVertical="top"
+                autoCorrect={false}
+                returnKeyType="default"
+                enablesReturnKeyAutomatically={false}
+              />
 
-            {/* Fotoğraf seçme ve önizleme */}
-            <View style={styles.imageSection}>
-              {/* Mevcut resimler */}
+              {/* Fotoğraf seçme ve önizleme - Sabit */}
               {imageUris.length > 0 && (
-                <View>
+                <View style={styles.imageSection}>
                   <ScrollView
                     horizontal
                     style={styles.imageScrollContainer}
@@ -322,63 +368,19 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
                   )}
                 </View>
               )}
+            </LinedPaper>
+          </View>
 
-              {/* Resim ekleme butonu */}
-              <TouchableOpacity
-                style={styles.addImageButton}
-                onPress={showImagePicker}
-              >
-                <Ionicons name="camera" size={24} color="#666" />
-                <Text style={styles.addImageText}>
-                  {imageUris.length > 0
-                    ? "Başka Fotoğraf Ekle"
-                    : "Fotoğraf Ekle"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Butonlar modalın en altında */}
-            {/* Font Seçici Butonu */}
-            <View style={styles.fontSection}>
-              <Text style={styles.sectionTitle}>Font Seçimi</Text>
-              <TouchableOpacity
-                style={[styles.fontButton, { borderColor: "#ddd" }]}
-                onPress={() => setFontPickerVisible(true)}
-              >
-                <MaterialIcons name="text-fields" size={24} color="#333" />
-                <Text
-                  style={[
-                    styles.fontButtonText,
-                    {
-                      fontFamily: getFontFamily(selectedFont),
-                    },
-                  ]}
-                >
-                  {getSelectedFontName()}
-                </Text>
-                <MaterialIcons
-                  name="keyboard-arrow-down"
-                  size={24}
-                  color="#333"
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.buttons}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancel]}
-                onPress={onClose}
-              >
-                <Text style={styles.buttonText}>İptal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.save]}
-                onPress={handleSave}
-              >
-                <Text style={styles.buttonText}>Kaydet</Text>
-              </TouchableOpacity>
-            </View>
-          </LinedPaper>
+          {/* Fotoğraf Ekle butonu - En altta sabit */}
+          <TouchableOpacity
+            style={styles.fixedAddImageButton}
+            onPress={showImagePicker}
+          >
+            <Ionicons name="camera" size={24} color="#666" />
+            <Text style={styles.addImageText}>
+              {imageUris.length > 0 ? "Başka Fotoğraf Ekle" : "Fotoğraf Ekle"}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -463,33 +465,108 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  paperWrapper: {
-    width: width * 0.85,
-    height: height * 0.7,
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#fff",
-    elevation: 5,
+  topGrid: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    right: 20,
+    height: 100,
+    zIndex: 10,
   },
-  input: {
-    minHeight: 50,
-    paddingVertical: 12,
+  buttonArea: {
+    height: 50,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  fontArea: {
+    height: 50,
+    alignItems: "center",
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 10,
+  },
+  fontLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    letterSpacing: 0.5,
+  },
+  fontSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderWidth: 2,
+    borderColor: "#686868ff",
+    backgroundColor: "#f5f5f5",
+    borderStyle: "dashed",
+    borderRadius: 8,
+  },
+  fontSelectorText: {
+    marginHorizontal: 8,
+    fontSize: 14,
+    color: "#4f46e5",
+    fontWeight: "500",
+    flex: 1,
+  },
+  bottomGrid: {
+    position: "absolute",
+    top: 170,
+    left: 20,
+    right: 20,
+    bottom: 50,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    overflow: "hidden",
+    flexDirection: "column",
+  },
+  linedPaperContainer: {
+    flex: 1,
+  },
+  mainScrollView: {
+    flex: 1,
+  },
+  fixedAddImageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    margin: 8,
+    borderWidth: 2,
+    borderColor: "#686868ff",
+    backgroundColor: "#f5f5f5",
+    borderStyle: "dashed",
+    borderRadius: 8,
+  },
+  titleInput: {
     paddingHorizontal: 28,
+    paddingVertical: 8,
     textAlignVertical: "top",
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 8,
+    fontSize: 18,
     borderColor: "#ccc",
   },
-  inputText: {
+  contentInput: {
     flex: 1,
     paddingHorizontal: 28,
+    paddingTop: 18,
+    paddingBottom: 8,
     textAlignVertical: "top",
+    fontSize: 16,
     borderColor: "#ccc",
   },
   imageSection: {
     paddingHorizontal: 28,
     paddingVertical: 12,
-    minHeight: 80,
-    maxHeight: 200,
+    marginBottom: 20,
   },
   imageScrollContainer: {
     marginBottom: 12,
@@ -557,13 +634,7 @@ const styles = StyleSheet.create({
   // Kapak fotoğrafı stilleri
   coverImageSection: {
     paddingHorizontal: 28,
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+    marginTop: 38,
   },
   coverImageContainer: {
     position: "relative",
@@ -586,12 +657,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 6,
+    padding: 12,
     borderWidth: 2,
-    borderColor: "#ddd",
+    borderColor: "#686868ff",
+    backgroundColor: "#f5f5f5",
     borderStyle: "dashed",
     borderRadius: 8,
-    backgroundColor: "#f9f9f9",
   },
   addCoverImageText: {
     marginLeft: 8,
@@ -599,30 +670,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
-  buttons: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
+
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    margin: 10,
-  },
-  cancel: { backgroundColor: "red" },
-  save: { backgroundColor: "#007bff" },
-  buttonText: { fontSize: 16, fontWeight: "bold", color: "white" },
+  cancelIcon: { backgroundColor: "#ff4444" },
+  saveIcon: { backgroundColor: "#007bff" },
 
   // Font seçici stilleri
   fontSection: {
     paddingHorizontal: 28,
-    marginTop: 16,
   },
   fontButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 12,
+    padding: 4,
     borderWidth: 2,
     borderStyle: "dashed",
     borderRadius: 8,
@@ -691,13 +764,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     marginBottom: 6,
-    lineHeight: 20,
     flexWrap: "wrap",
   },
   fontSubtext: {
     fontSize: 11,
     color: "#666",
-    lineHeight: 16,
     flexWrap: "wrap",
   },
 });

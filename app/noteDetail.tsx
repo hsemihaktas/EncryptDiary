@@ -272,7 +272,12 @@ export default function NoteDetailScreen() {
       )}
 
       {/* Kağıt dokulu arkaplanlı kutu */}
-      <View style={styles.noteWrapper}>
+      <View
+        style={[
+          styles.noteWrapper,
+          { marginTop: isEditing && canEdit ? 120 : 0 },
+        ]}
+      >
         <LinedPaper>
           <View
             style={{
@@ -285,7 +290,6 @@ export default function NoteDetailScreen() {
             {/* Kapak Fotoğrafı Düzenleme Alanı */}
             {isEditing && canEdit && (
               <View style={styles.coverImageSection}>
-                <Text style={styles.sectionTitle}>Kapak Fotoğrafı</Text>
                 {coverImageUri ? (
                   <View style={styles.coverImageContainer}>
                     <Image
@@ -304,80 +308,85 @@ export default function NoteDetailScreen() {
                     style={styles.addCoverImageButton}
                     onPress={showCoverImagePicker}
                   >
-                    <Ionicons name="image" size={32} color="#666" />
+                    <Ionicons name="image" size={28} color="#686868ff" />
                     <Text style={styles.addCoverImageText}>
-                      Kapak Fotoğrafı Seç
+                      Kapak Fotoğrafı Seç/Değiştir
                     </Text>
                   </TouchableOpacity>
                 )}
               </View>
             )}
 
-            {/* Font Seçici Düzenleme Alanı */}
-            {isEditing && canEdit && (
-              <View style={styles.fontSection}>
-                <Text style={styles.sectionTitle}>Font Seçimi</Text>
-                <TouchableOpacity
-                  style={[styles.fontButton, { borderColor: "#ddd" }]}
-                  onPress={() => setFontPickerVisible(true)}
-                >
-                  <MaterialIcons name="text-fields" size={24} color="#333" />
+            {/* Başlık - sadece varsa veya düzenleme modunda göster */}
+            {(title.trim() || isEditing) &&
+              (isEditing && canEdit ? (
+                <TextInput
+                  style={[
+                    styles.titleInput,
+                    {
+                      color: "#000",
+                      fontFamily: getFontFamily(fontFamily),
+                    },
+                  ]}
+                  placeholder="Başlık"
+                  placeholderTextColor="#666"
+                  editable={true}
+                  value={loaded ? title : ""}
+                  onChangeText={setTitle}
+                />
+              ) : title.trim() ? (
+                <View style={styles.readModeTitle}>
                   <Text
                     style={[
-                      styles.fontButtonText,
+                      styles.readModeTitleText,
                       {
                         fontFamily: getFontFamily(fontFamily),
                       },
                     ]}
                   >
-                    {getSelectedFontName()}
+                    {title}
                   </Text>
-                  <MaterialIcons
-                    name="keyboard-arrow-down"
-                    size={24}
-                    color="#333"
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
+                </View>
+              ) : null)}
 
-            {/* Başlık - sadece varsa veya düzenleme modunda göster */}
-            {(title.trim() || isEditing) && (
+            {/* İçerik */}
+            {isEditing && canEdit ? (
               <TextInput
                 style={[
-                  styles.titleInput,
+                  styles.input,
                   {
                     color: "#000",
                     fontFamily: getFontFamily(fontFamily),
+                    marginTop: !title.trim() && !isEditing ? 11 : 0,
                   },
                 ]}
-                placeholder="Başlık"
+                multiline
+                textAlignVertical="top"
+                editable={true}
+                value={loaded ? noteText : ""}
+                onChangeText={setNoteText}
+                placeholder={
+                  !title.trim() && !isEditing ? "" : "Not içeriği..."
+                }
                 placeholderTextColor="#666"
-                editable={isEditing && !!canEdit}
-                value={loaded ? title : ""}
-                onChangeText={setTitle}
               />
+            ) : (
+              <ScrollView
+                style={styles.readModeContent}
+                showsVerticalScrollIndicator={false}
+              >
+                <Text
+                  style={[
+                    styles.readModeText,
+                    {
+                      fontFamily: getFontFamily(fontFamily),
+                    },
+                  ]}
+                >
+                  {noteText}
+                </Text>
+              </ScrollView>
             )}
-
-            {/* İçerik */}
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: "#000",
-                  fontFamily: getFontFamily(fontFamily),
-                  // Başlık yoksa üstten başlat
-                  marginTop: !title.trim() && !isEditing ? 11 : 0,
-                },
-              ]}
-              multiline
-              textAlignVertical="top"
-              editable={isEditing && !!canEdit}
-              value={loaded ? noteText : ""}
-              onChangeText={setNoteText}
-              placeholder={!title.trim() && !isEditing ? "" : "Not içeriği..."}
-              placeholderTextColor="#666"
-            />
 
             {/* Fotoğraf bölümü */}
             {(imageUris.length > 0 || isEditing) && (
@@ -439,11 +448,11 @@ export default function NoteDetailScreen() {
 
                 {isEditing && canEdit && (
                   <TouchableOpacity
-                    style={styles.addImageBtn}
+                    style={styles.addCoverImageButton}
                     onPress={showImagePicker}
                   >
                     <MaterialIcons name="camera-alt" size={24} color="#666" />
-                    <Text style={styles.addImageText}>
+                    <Text style={styles.addCoverImageText}>
                       {imageUris.length > 0
                         ? "Başka Fotoğraf Ekle"
                         : "Fotoğraf Ekle"}
@@ -455,6 +464,29 @@ export default function NoteDetailScreen() {
           </View>
         </LinedPaper>
       </View>
+
+      {/* Font Seçici Düzenleme Alanı - LinedPaper dışında */}
+      {isEditing && canEdit && (
+        <View style={styles.fontSectionOutside}>
+          <TouchableOpacity
+            style={[styles.fontButtonOutside]}
+            onPress={() => setFontPickerVisible(true)}
+          >
+            <MaterialIcons name="text-fields" size={24} color="#333" />
+            <Text
+              style={[
+                styles.fontButtonTextOutside,
+                {
+                  fontFamily: getFontFamily(fontFamily),
+                },
+              ]}
+            >
+              {getSelectedFontName()}
+            </Text>
+            <MaterialIcons name="keyboard-arrow-down" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Confirm Modal */}
       {canEdit && (
@@ -583,9 +615,8 @@ const styles = StyleSheet.create({
   },
   titleInput: {
     fontSize: 22,
-    marginTop: 6,
+    marginTop: 0,
     marginBottom: 8,
-    lineHeight: 30,
     letterSpacing: 0.5,
     textAlign: "center",
     textTransform: "capitalize",
@@ -593,17 +624,15 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    lineHeight: LINE_HEIGHT,
     letterSpacing: 0.3,
   },
   imageSection: {
-    marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
   },
   imageList: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   imageContainer: {
     position: "relative",
@@ -627,21 +656,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  addImageBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
-  },
-  addImageText: {
-    marginLeft: 8,
-    color: "#666",
-    fontSize: 16,
-  },
+
   progressContainer: {
     alignItems: "center",
     marginTop: 12,
@@ -676,7 +691,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  disabledButton: { backgroundColor: "#8b0000", opacity: 0.9 },
+
   rightButtons: {
     position: "absolute",
     top: 80,
@@ -710,14 +725,9 @@ const styles = StyleSheet.create({
   coverImageSection: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    marginBottom: 16,
+    marginBottom: 10,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
+
   coverImageContainer: {
     position: "relative",
     alignItems: "center",
@@ -739,16 +749,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 16,
+    padding: 12,
     borderWidth: 2,
-    borderColor: "#ddd",
+    borderColor: "#686868ff",
+    backgroundColor: "#f5f5f5",
     borderStyle: "dashed",
     borderRadius: 8,
   },
   addCoverImageText: {
     marginLeft: 8,
-    color: "#666",
-    fontSize: 16,
+    color: "#686868ff",
+    fontSize: 14,
     fontWeight: "500",
   },
   modalBtn: {
@@ -757,30 +768,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-  },
-
-  // Font seçici stilleri
-  fontSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-  fontButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 12,
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
-  },
-  fontButtonText: {
-    flex: 1,
-    marginLeft: 8,
-    color: "#333",
-    fontSize: 14,
-    fontWeight: "500",
   },
 
   // Font picker modal stilleri
@@ -838,13 +825,64 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     marginBottom: 6,
-    lineHeight: 20,
+
     flexWrap: "wrap",
   },
   fontSubtext: {
     fontSize: 11,
     color: "#666",
-    lineHeight: 16,
+
     flexWrap: "wrap",
+  },
+
+  // Font section outside LinedPaper styles
+  fontSectionOutside: {
+    width: "100%",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginTop: 16,
+  },
+
+  fontButtonOutside: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderWidth: 2,
+    borderColor: "#686868ff",
+    backgroundColor: "#f5f5f5",
+    borderStyle: "dashed",
+    borderRadius: 8,
+  },
+  fontButtonTextOutside: {
+    flex: 1,
+    marginLeft: 8,
+    color: "#333",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  // Okuma modu stilleri
+  readModeTitle: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  readModeTitleText: {
+    fontSize: 22,
+    textAlign: "center",
+    textTransform: "capitalize",
+    color: "#000",
+    fontWeight: "600",
+  },
+  readModeContent: {
+    flex: 1,
+  },
+  readModeText: {
+    fontSize: 16,
+
+    letterSpacing: 0.3,
+    color: "#000",
+    paddingBottom: 20,
   },
 });
