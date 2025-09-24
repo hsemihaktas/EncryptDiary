@@ -28,7 +28,7 @@ export default function LinedPaper({
               left: 0,
               right: 0,
               borderBottomWidth: RNStyleSheet.hairlineWidth,
-              borderBottomColor: "#d7d7d7",
+              borderBottomColor: "#4e4e4eff",
             }}
           />
         ))}
