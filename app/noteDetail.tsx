@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import LinedPaper from "../components/LinedPaper";
+import { AVAILABLE_FONTS } from "../constants/Fonts";
 import { useNotes } from "../context/NotesContext";
 import { useTheme } from "../context/ThemeContext";
 import { getFontFamily } from "../utils/fontLoader";
@@ -38,6 +39,7 @@ export default function NoteDetailScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [fontPickerVisible, setFontPickerVisible] = useState(false);
 
   const router = useRouter();
 
@@ -90,6 +92,16 @@ export default function NoteDetailScreen() {
   const handleEditToggle = () => {
     if (isEditing) handleSave();
     else setIsEditing(true);
+  };
+
+  const handleFontSelect = (fontValue: string) => {
+    setFontFamily(fontValue);
+    setFontPickerVisible(false);
+  };
+
+  const getSelectedFontName = () => {
+    const font = AVAILABLE_FONTS.find((f) => f.value === fontFamily);
+    return font ? font.name : "Nunito";
   };
 
   const pickImageFromGallery = async () => {
@@ -301,6 +313,34 @@ export default function NoteDetailScreen() {
               </View>
             )}
 
+            {/* Font Seçici Düzenleme Alanı */}
+            {isEditing && canEdit && (
+              <View style={styles.fontSection}>
+                <Text style={styles.sectionTitle}>Font Seçimi</Text>
+                <TouchableOpacity
+                  style={[styles.fontButton, { borderColor: "#ddd" }]}
+                  onPress={() => setFontPickerVisible(true)}
+                >
+                  <MaterialIcons name="text-fields" size={24} color="#333" />
+                  <Text
+                    style={[
+                      styles.fontButtonText,
+                      {
+                        fontFamily: getFontFamily(fontFamily),
+                      },
+                    ]}
+                  >
+                    {getSelectedFontName()}
+                  </Text>
+                  <MaterialIcons
+                    name="keyboard-arrow-down"
+                    size={24}
+                    color="#333"
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Başlık */}
             <TextInput
               style={[
@@ -310,7 +350,7 @@ export default function NoteDetailScreen() {
                   fontFamily: getFontFamily(fontFamily),
                 },
               ]}
-              placeholder="Başlık"
+              placeholder=""
               placeholderTextColor="#666"
               editable={isEditing && !!canEdit}
               value={loaded ? title : ""}
@@ -444,6 +484,77 @@ export default function NoteDetailScreen() {
           </View>
         </Modal>
       )}
+
+      {/* Font Seçici Modal */}
+      <Modal
+        visible={fontPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFontPickerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.fontPickerOverlay}
+          activeOpacity={1}
+          onPress={() => setFontPickerVisible(false)}
+        >
+          <View style={styles.fontPickerContainer}>
+            <View style={styles.fontPickerHeader}>
+              <Text
+                style={[
+                  styles.fontPickerTitle,
+                  {
+                    fontFamily: getFontFamily(fontFamily),
+                  },
+                ]}
+              >
+                Font Seç - {getSelectedFontName()}
+              </Text>
+              <TouchableOpacity onPress={() => setFontPickerVisible(false)}>
+                <MaterialIcons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.fontList}>
+              {AVAILABLE_FONTS.map((font) => (
+                <TouchableOpacity
+                  key={font.value}
+                  style={[
+                    styles.fontItem,
+                    fontFamily === font.value && styles.selectedFontItem,
+                  ]}
+                  onPress={() => handleFontSelect(font.value)}
+                >
+                  <View style={styles.fontItemContent}>
+                    <Text
+                      style={[
+                        styles.fontSampleText,
+                        {
+                          fontFamily: getFontFamily(font.value),
+                        },
+                      ]}
+                    >
+                      {font.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.fontSubtext,
+                        {
+                          fontFamily: getFontFamily(font.value),
+                        },
+                      ]}
+                    >
+                      Bugün güzel bir gün 🌸
+                    </Text>
+                  </View>
+                  {fontFamily === font.value && (
+                    <MaterialIcons name="check" size={20} color="#007bff" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -639,5 +750,94 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
+  },
+
+  // Font seçici stilleri
+  fontSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  fontButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  fontButtonText: {
+    flex: 1,
+    marginLeft: 8,
+    color: "#333",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  // Font picker modal stilleri
+  fontPickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fontPickerContainer: {
+    width: "90%",
+    maxHeight: "75%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  fontPickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  fontPickerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+    marginRight: 8,
+  },
+  fontList: {
+    maxHeight: 450,
+    paddingBottom: 8,
+  },
+  fontItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    minHeight: 70,
+  },
+  selectedFontItem: {
+    backgroundColor: "#e3f2fd",
+  },
+  fontItemContent: {
+    flex: 1,
+    marginRight: 12,
+    paddingRight: 8,
+  },
+  fontSampleText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+    lineHeight: 20,
+    flexWrap: "wrap",
+  },
+  fontSubtext: {
+    fontSize: 11,
+    color: "#666",
+    lineHeight: 16,
+    flexWrap: "wrap",
   },
 });
