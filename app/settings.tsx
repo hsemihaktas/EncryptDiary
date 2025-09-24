@@ -12,20 +12,29 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { THEME_COLORS, useTheme } from "../context/ThemeContext";
+import CustomThemeEditor from "../components/CustomThemeEditor";
+import {
+  CUSTOM_THEME_PLACEHOLDER,
+  THEME_COLORS,
+  useTheme,
+} from "../context/ThemeContext";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const {
     currentTheme,
     setTheme,
+    getCustomTheme,
     backgroundColor,
     textColor,
     primaryColor,
+    buttonColor,
+    buttonTextColor,
     isDark,
   } = useTheme();
 
   const [resetModalVisible, setResetModalVisible] = useState(false);
+  const [showCustomThemeEditor, setShowCustomThemeEditor] = useState(false);
 
   const handleThemeSelect = async (themeId: string) => {
     await setTheme(themeId);
@@ -58,7 +67,7 @@ export default function SettingsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor }]}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={28} color={primaryColor} />
+          <MaterialIcons name="arrow-back" size={28} color={buttonColor} />
         </TouchableOpacity>
         <Text style={[styles.header, { color: primaryColor }]}>Ayarlar</Text>
         <View style={styles.placeholder} />
@@ -112,7 +121,70 @@ export default function SettingsScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
+
+            {/* Özel Tema Seçeneği */}
+            <TouchableOpacity
+              style={[
+                styles.colorOption,
+                styles.customThemeOption,
+                {
+                  backgroundColor:
+                    getCustomTheme()?.backgroundColor ||
+                    CUSTOM_THEME_PLACEHOLDER.backgroundColor,
+                  borderColor:
+                    currentTheme.id === "custom" ? "#1782c9ff" : "#ddd",
+                },
+                currentTheme.id === "custom" && styles.selectedColorOption,
+              ]}
+              onPress={() => {
+                const customTheme = getCustomTheme();
+                if (customTheme) {
+                  handleThemeSelect("custom");
+                } else {
+                  setShowCustomThemeEditor(true);
+                }
+              }}
+            >
+              <View style={styles.colorPreview}>
+                {currentTheme.id === "custom" ? (
+                  <MaterialIcons name="check" size={24} color="#1782c9ff" />
+                ) : (
+                  <MaterialIcons name="palette" size={24} color="#6366f1" />
+                )}
+              </View>
+              <Text
+                style={[
+                  styles.colorName,
+                  { color: getCustomTheme()?.textColor || "#1a1a1a" },
+                ]}
+              >
+                {getCustomTheme()?.name || "Özel Tema"}
+              </Text>
+              <Text
+                style={[
+                  styles.colorDescription,
+                  { color: getCustomTheme()?.textColor || "#666" },
+                ]}
+              >
+                {getCustomTheme()?.description || "Kendi temanı oluştur"}
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {/* Özel Tema Düzenleme Butonu */}
+          {getCustomTheme() && (
+            <TouchableOpacity
+              style={[styles.editThemeButton, { borderColor: buttonColor }]}
+              onPress={() => setShowCustomThemeEditor(true)}
+            >
+              <MaterialIcons name="edit" size={20} color={buttonColor} />
+              <Text
+                style={[styles.editThemeButtonText, { color: buttonColor }]}
+              >
+                Özel Temayı Düzenle
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -129,14 +201,13 @@ export default function SettingsScreen() {
           </Text>
 
           <TouchableOpacity
-            style={[
-              styles.dangerButton,
-              { backgroundColor: isDark ? "#8b0000" : "#ff4444" },
-            ]}
+            style={[styles.dangerButton, { backgroundColor: buttonColor }]}
             onPress={showResetConfirmation}
           >
             <MaterialIcons name="warning" size={24} color="#fff" />
-            <Text style={styles.dangerButtonText}>Şifreyi Sıfırla</Text>
+            <Text style={[styles.dangerButtonText, { color: buttonTextColor }]}>
+              Şifreyi Sıfırla
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -168,15 +239,25 @@ export default function SettingsScreen() {
                 <Text style={styles.cancelButtonText}>İptal</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
+                style={[styles.modalButton, { backgroundColor: buttonColor }]}
                 onPress={handlePasswordReset}
               >
-                <Text style={styles.confirmButtonText}>Sıfırla</Text>
+                <Text
+                  style={[styles.confirmButtonText, { color: buttonTextColor }]}
+                >
+                  Sıfırla
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+      {/* Custom Theme Editor Modal */}
+      <CustomThemeEditor
+        visible={showCustomThemeEditor}
+        onClose={() => setShowCustomThemeEditor(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -330,5 +411,25 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  // Özel tema stilleri
+  customThemeOption: {
+    borderWidth: 2,
+    borderStyle: "dashed",
+  },
+  editThemeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  editThemeButtonText: {
+    marginLeft: 6,
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

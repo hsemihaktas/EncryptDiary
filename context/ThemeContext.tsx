@@ -9,10 +9,8 @@ export type ThemeColor = {
   backgroundColor: string;
   textColor: string;
   primaryColor: string;
-  secondaryColor: string;
   buttonColor: string;
   buttonTextColor: string;
-  cardBackground: string;
   inputBackground: string;
   borderColor: string;
   isDark: boolean;
@@ -26,10 +24,8 @@ export const THEME_COLORS: ThemeColor[] = [
     backgroundColor: "#ffffff",
     textColor: "#1a1a1a",
     primaryColor: "#2563eb",
-    secondaryColor: "#3b82f6",
     buttonColor: "#1d4ed8",
     buttonTextColor: "#ffffff",
-    cardBackground: "#f8fafc",
     inputBackground: "#ffffff",
     borderColor: "#e2e8f0",
     isDark: false,
@@ -41,10 +37,8 @@ export const THEME_COLORS: ThemeColor[] = [
     backgroundColor: "#fed7aa",
     textColor: "#7c2d12",
     primaryColor: "#ea580c",
-    secondaryColor: "#fb923c",
     buttonColor: "#dc2626",
     buttonTextColor: "#ffffff",
-    cardBackground: "#fff7ed",
     inputBackground: "#ffffff",
     borderColor: "#fdba74",
     isDark: false,
@@ -56,10 +50,8 @@ export const THEME_COLORS: ThemeColor[] = [
     backgroundColor: "#cffafe",
     textColor: "#0c4a6e",
     primaryColor: "#0891b2",
-    secondaryColor: "#06b6d4",
     buttonColor: "#0284c7",
     buttonTextColor: "#ffffff",
-    cardBackground: "#f0fdff",
     inputBackground: "#ffffff",
     borderColor: "#67e8f9",
     isDark: false,
@@ -71,10 +63,8 @@ export const THEME_COLORS: ThemeColor[] = [
     backgroundColor: "#dcfce7",
     textColor: "#14532d",
     primaryColor: "#15803d",
-    secondaryColor: "#22c55e",
     buttonColor: "#16a34a",
     buttonTextColor: "#ffffff",
-    cardBackground: "#f0fdf4",
     inputBackground: "#ffffff",
     borderColor: "#86efac",
     isDark: false,
@@ -86,27 +76,10 @@ export const THEME_COLORS: ThemeColor[] = [
     backgroundColor: "#fef3c7",
     textColor: "#92400e",
     primaryColor: "#d97706",
-    secondaryColor: "#f59e0b",
     buttonColor: "#b45309",
     buttonTextColor: "#ffffff",
-    cardBackground: "#fffbeb",
     inputBackground: "#ffffff",
     borderColor: "#fcd34d",
-    isDark: false,
-  },
-  {
-    id: "lavender",
-    name: "Kraliyet Moru",
-    description: "Derin mor kraliyet",
-    backgroundColor: "#f3e8ff",
-    textColor: "#581c87",
-    primaryColor: "#7c3aed",
-    secondaryColor: "#a855f7",
-    buttonColor: "#8b5cf6",
-    buttonTextColor: "#ffffff",
-    cardBackground: "#faf5ff",
-    inputBackground: "#ffffff",
-    borderColor: "#c4b5fd",
     isDark: false,
   },
   {
@@ -116,10 +89,8 @@ export const THEME_COLORS: ThemeColor[] = [
     backgroundColor: "#ffe4e6",
     textColor: "#881337",
     primaryColor: "#be123c",
-    secondaryColor: "#e11d48",
     buttonColor: "#dc2626",
     buttonTextColor: "#ffffff",
-    cardBackground: "#fff1f2",
     inputBackground: "#ffffff",
     borderColor: "#fda4af",
     isDark: false,
@@ -131,27 +102,43 @@ export const THEME_COLORS: ThemeColor[] = [
     backgroundColor: "#1a1a1a",
     textColor: "#f5f5f5",
     primaryColor: "#60a5fa",
-    secondaryColor: "#3b82f6",
     buttonColor: "#2563eb",
     buttonTextColor: "#ffffff",
-    cardBackground: "#2a2a2a",
     inputBackground: "#333333",
     borderColor: "#404040",
     isDark: true,
   },
 ];
 
+// Custom theme placeholder for theme selector
+export const CUSTOM_THEME_PLACEHOLDER: ThemeColor = {
+  id: "custom",
+  name: "Özel Tema",
+  description: "Kendi temanı oluştur",
+  backgroundColor: "#f0f0f0",
+  textColor: "#1a1a1a",
+  primaryColor: "#6366f1",
+  buttonColor: "#5b21b6",
+  buttonTextColor: "#ffffff",
+  inputBackground: "#ffffff",
+  borderColor: "#e2e8f0",
+  isDark: false,
+};
+
 type ThemeContextType = {
   currentTheme: ThemeColor;
   setTheme: (themeId: string) => Promise<void>;
+  // Custom theme functions
+  createCustomTheme: (theme: Partial<ThemeColor>) => Promise<void>;
+  updateCustomTheme: (updates: Partial<ThemeColor>) => Promise<void>;
+  getCustomTheme: () => ThemeColor | null;
+  resetToDefault: () => Promise<void>;
   // Direct access to theme colors
   backgroundColor: string;
   textColor: string;
   primaryColor: string;
-  secondaryColor: string;
   buttonColor: string;
   buttonTextColor: string;
-  cardBackground: string;
   inputBackground: string;
   borderColor: string;
   isDark: boolean;
@@ -163,15 +150,28 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [currentTheme, setCurrentTheme] = useState<ThemeColor>(THEME_COLORS[0]);
+  const [customTheme, setCustomTheme] = useState<ThemeColor | null>(null);
 
   useEffect(() => {
     const loadTheme = async () => {
       try {
         const savedThemeId = await AsyncStorage.getItem("app_theme");
+        const savedCustomTheme = await AsyncStorage.getItem("custom_theme");
+
+        // Load custom theme if exists
+        if (savedCustomTheme) {
+          const customThemeData = JSON.parse(savedCustomTheme);
+          setCustomTheme(customThemeData);
+        }
+
         if (savedThemeId) {
-          const theme = THEME_COLORS.find((t) => t.id === savedThemeId);
-          if (theme) {
-            setCurrentTheme(theme);
+          if (savedThemeId === "custom" && customTheme) {
+            setCurrentTheme(customTheme);
+          } else {
+            const theme = THEME_COLORS.find((t) => t.id === savedThemeId);
+            if (theme) {
+              setCurrentTheme(theme);
+            }
           }
         }
       } catch (error) {
@@ -179,27 +179,89 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
     loadTheme();
-  }, []);
+  }, [customTheme]);
 
   const setTheme = async (themeId: string) => {
     try {
-      const theme = THEME_COLORS.find((t) => t.id === themeId);
-      if (theme) {
+      if (themeId === "custom" && customTheme) {
         await AsyncStorage.setItem("app_theme", themeId);
-        setCurrentTheme(theme);
+        setCurrentTheme(customTheme);
+      } else {
+        const theme = THEME_COLORS.find((t) => t.id === themeId);
+        if (theme) {
+          await AsyncStorage.setItem("app_theme", themeId);
+          setCurrentTheme(theme);
+        }
       }
     } catch (error) {
       console.error("Theme kaydedilirken hata:", error);
     }
   };
 
+  const createCustomTheme = async (themeData: Partial<ThemeColor>) => {
+    try {
+      const newCustomTheme: ThemeColor = {
+        id: "custom",
+        name: themeData.name || "Özel Tema",
+        description:
+          themeData.description || "Kullanıcı tarafından özelleştirildi",
+        backgroundColor: themeData.backgroundColor || "#ffffff",
+        textColor: themeData.textColor || "#1a1a1a",
+        primaryColor: themeData.primaryColor || "#2563eb",
+        buttonColor: themeData.buttonColor || "#1d4ed8",
+        buttonTextColor: themeData.buttonTextColor || "#ffffff",
+        inputBackground: themeData.inputBackground || "#ffffff",
+        borderColor: themeData.borderColor || "#e2e8f0",
+        isDark: themeData.isDark || false,
+      };
+
+      await AsyncStorage.setItem(
+        "custom_theme",
+        JSON.stringify(newCustomTheme)
+      );
+      setCustomTheme(newCustomTheme);
+      await setTheme("custom");
+    } catch (error) {
+      console.error("Custom theme oluşturulurken hata:", error);
+    }
+  };
+
+  const updateCustomTheme = async (updates: Partial<ThemeColor>) => {
+    try {
+      if (!customTheme) return;
+
+      const updatedTheme = { ...customTheme, ...updates };
+      await AsyncStorage.setItem("custom_theme", JSON.stringify(updatedTheme));
+      setCustomTheme(updatedTheme);
+
+      if (currentTheme.id === "custom") {
+        setCurrentTheme(updatedTheme);
+      }
+    } catch (error) {
+      console.error("Custom theme güncellenirken hata:", error);
+    }
+  };
+
+  const getCustomTheme = () => {
+    return customTheme;
+  };
+
+  const resetToDefault = async () => {
+    try {
+      await AsyncStorage.removeItem("custom_theme");
+      await AsyncStorage.setItem("app_theme", "default");
+      setCustomTheme(null);
+      setCurrentTheme(THEME_COLORS[0]);
+    } catch (error) {
+      console.error("Tema sıfırlanırken hata:", error);
+    }
+  };
+
   const backgroundColor = currentTheme.backgroundColor;
   const textColor = currentTheme.textColor;
   const primaryColor = currentTheme.primaryColor;
-  const secondaryColor = currentTheme.secondaryColor;
   const buttonColor = currentTheme.buttonColor;
   const buttonTextColor = currentTheme.buttonTextColor;
-  const cardBackground = currentTheme.cardBackground;
   const inputBackground = currentTheme.inputBackground;
   const borderColor = currentTheme.borderColor;
   const isDark = currentTheme.isDark;
@@ -209,13 +271,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         currentTheme,
         setTheme,
+        createCustomTheme,
+        updateCustomTheme,
+        getCustomTheme,
+        resetToDefault,
         backgroundColor,
         textColor,
         primaryColor,
-        secondaryColor,
         buttonColor,
         buttonTextColor,
-        cardBackground,
         inputBackground,
         borderColor,
         isDark,

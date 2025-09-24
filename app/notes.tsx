@@ -17,7 +17,8 @@ import { useTheme } from "../context/ThemeContext";
 
 export default function NotesScreen() {
   const { notes, addNote, loadNotesWithPassword } = useNotes();
-  const { backgroundColor, primaryColor, buttonColor } = useTheme();
+  const { backgroundColor, primaryColor, buttonColor, buttonTextColor } =
+    useTheme();
   const router = useRouter();
 
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
@@ -68,7 +69,7 @@ export default function NotesScreen() {
                 onPress={() => router.push("/settings")}
                 style={styles.settingsButton}
               >
-                <MaterialIcons name="settings" size={28} color="#1782c9ff" />
+                <MaterialIcons name="settings" size={28} color={buttonColor} />
               </TouchableOpacity>
             )}
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -101,7 +102,7 @@ export default function NotesScreen() {
             style={[styles.fab, { backgroundColor: buttonColor }]}
             onPress={() => setModalVisible(true)}
           >
-            <MaterialIcons name="add" size={28} color="#fff" />
+            <MaterialIcons name="add" size={28} color={buttonTextColor} />
           </TouchableOpacity>
         )}
 

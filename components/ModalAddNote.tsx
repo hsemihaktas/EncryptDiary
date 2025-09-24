@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { AVAILABLE_FONTS } from "../constants/Fonts";
+import { useTheme } from "../context/ThemeContext";
 import { getFontFamily } from "../utils/fontLoader";
 import LinedPaper from "./LinedPaper";
 
@@ -36,6 +37,8 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
   onClose,
   onSave,
 }) => {
+  const { textColor, primaryColor, buttonColor, buttonTextColor } = useTheme();
+
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [imageUris, setImageUris] = useState<string[]>([]);
@@ -227,14 +230,23 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
           {/* Font Seçimi */}
           <View style={styles.fontArea}>
             <TouchableOpacity
-              style={styles.fontSelector}
+              style={[
+                styles.fontSelector,
+                {
+                  borderColor: buttonColor,
+                  backgroundColor: "white",
+                },
+              ]}
               onPress={() => setFontPickerVisible(true)}
             >
-              <MaterialIcons name="text-fields" size={20} color="#333" />
+              <MaterialIcons name="text-fields" size={20} color={buttonColor} />
               <Text
                 style={[
                   styles.fontSelectorText,
-                  { fontFamily: getFontFamily(selectedFont) },
+                  {
+                    fontFamily: getFontFamily(selectedFont),
+                    color: buttonColor,
+                  },
                 ]}
               >
                 {getSelectedFontName()}
@@ -242,7 +254,7 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
               <MaterialIcons
                 name="keyboard-arrow-down"
                 size={20}
-                color="#333"
+                color={buttonColor}
               />
             </TouchableOpacity>
           </View>
@@ -269,11 +281,19 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={styles.addCoverImageButton}
+                    style={[
+                      styles.addCoverImageButton,
+                      {
+                        borderColor: buttonColor,
+                        backgroundColor: buttonColor + "20",
+                      },
+                    ]}
                     onPress={showCoverImagePicker}
                   >
-                    <Ionicons name="image" size={32} color="#666" />
-                    <Text style={styles.addCoverImageText}>
+                    <Ionicons name="image" size={32} color={buttonColor} />
+                    <Text
+                      style={[styles.addCoverImageText, { color: buttonColor }]}
+                    >
                       Kapak Fotoğrafı Yükle
                     </Text>
                   </TouchableOpacity>
@@ -373,11 +393,14 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
 
           {/* Fotoğraf Ekle butonu - En altta sabit */}
           <TouchableOpacity
-            style={styles.fixedAddImageButton}
+            style={[
+              styles.fixedAddImageButton,
+              { borderColor: buttonColor, backgroundColor: buttonColor + "20" },
+            ]}
             onPress={showImagePicker}
           >
-            <Ionicons name="camera" size={24} color="#666" />
-            <Text style={styles.addImageText}>
+            <Ionicons name="camera" size={24} color={buttonColor} />
+            <Text style={[styles.addImageText, { color: buttonColor }]}>
               {imageUris.length > 0 ? "Başka Fotoğraf Ekle" : "Fotoğraf Ekle"}
             </Text>
           </TouchableOpacity>
@@ -409,7 +432,7 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
                 Font Seç - {getSelectedFontName()}
               </Text>
               <TouchableOpacity onPress={() => setFontPickerVisible(false)}>
-                <MaterialIcons name="close" size={24} color="#333" />
+                <MaterialIcons name="close" size={24} color={buttonColor} />
               </TouchableOpacity>
             </View>
 
@@ -481,11 +504,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   fontArea: {
-    height: 50,
     alignItems: "center",
-    paddingHorizontal: 16,
-    borderRadius: 12,
     marginTop: 10,
+    marginHorizontal: 16,
+    marginVertical: 4,
   },
   fontLabel: {
     fontSize: 16,
@@ -667,8 +689,9 @@ const styles = StyleSheet.create({
   addCoverImageText: {
     marginLeft: 8,
     color: "#666",
-    fontSize: 12,
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.3,
   },
 
   iconButton: {

@@ -25,7 +25,8 @@ export default function NoteDetailScreen() {
   const { index } = useLocalSearchParams<{ index: string }>();
   const noteIndex = Number(index);
   const { notes, editNote, deleteNote } = useNotes();
-  const { backgroundColor, primaryColor, buttonColor } = useTheme();
+  const { backgroundColor, primaryColor, buttonColor, buttonTextColor } =
+    useTheme();
 
   const [title, setTitle] = useState("");
   const [noteText, setNoteText] = useState("");
@@ -244,7 +245,7 @@ export default function NoteDetailScreen() {
         style={[styles.backButton]}
         onPress={() => router.push("/notes")}
       >
-        <MaterialIcons name="arrow-back" size={28} color={primaryColor} />
+        <MaterialIcons name="arrow-back" size={28} color={buttonColor} />
       </TouchableOpacity>
 
       {/* Sağ üst butonlar sadece şifre eşleşiyorsa */}
@@ -265,7 +266,7 @@ export default function NoteDetailScreen() {
             <MaterialIcons
               name={isEditing ? "save" : "edit"}
               size={28}
-              color="#007bff"
+              color={buttonColor}
             />
           </TouchableOpacity>
         </View>
@@ -305,11 +306,19 @@ export default function NoteDetailScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={styles.addCoverImageButton}
+                    style={[
+                      styles.addCoverImageButton,
+                      {
+                        borderColor: buttonColor,
+                        backgroundColor: buttonColor + "20",
+                      },
+                    ]}
                     onPress={showCoverImagePicker}
                   >
-                    <Ionicons name="image" size={28} color="#686868ff" />
-                    <Text style={styles.addCoverImageText}>
+                    <Ionicons name="image" size={28} color={buttonColor} />
+                    <Text
+                      style={[styles.addCoverImageText, { color: buttonColor }]}
+                    >
                       Kapak Fotoğrafı Seç/Değiştir
                     </Text>
                   </TouchableOpacity>
@@ -448,11 +457,23 @@ export default function NoteDetailScreen() {
 
                 {isEditing && canEdit && (
                   <TouchableOpacity
-                    style={styles.addCoverImageButton}
+                    style={[
+                      styles.addCoverImageButton,
+                      {
+                        borderColor: buttonColor,
+                        backgroundColor: buttonColor + "20",
+                      },
+                    ]}
                     onPress={showImagePicker}
                   >
-                    <MaterialIcons name="camera-alt" size={24} color="#666" />
-                    <Text style={styles.addCoverImageText}>
+                    <MaterialIcons
+                      name="camera-alt"
+                      size={24}
+                      color={buttonColor}
+                    />
+                    <Text
+                      style={[styles.addCoverImageText, { color: buttonColor }]}
+                    >
                       {imageUris.length > 0
                         ? "Başka Fotoğraf Ekle"
                         : "Fotoğraf Ekle"}
@@ -469,21 +490,29 @@ export default function NoteDetailScreen() {
       {isEditing && canEdit && (
         <View style={styles.fontSectionOutside}>
           <TouchableOpacity
-            style={[styles.fontButtonOutside]}
+            style={[
+              styles.fontButtonOutside,
+              { borderColor: buttonColor, backgroundColor: buttonColor + "20" },
+            ]}
             onPress={() => setFontPickerVisible(true)}
           >
-            <MaterialIcons name="text-fields" size={24} color="#333" />
+            <MaterialIcons name="text-fields" size={24} color={buttonColor} />
             <Text
               style={[
                 styles.fontButtonTextOutside,
                 {
                   fontFamily: getFontFamily(fontFamily),
+                  color: buttonColor,
                 },
               ]}
             >
               {getSelectedFontName()}
             </Text>
-            <MaterialIcons name="keyboard-arrow-down" size={24} color="#333" />
+            <MaterialIcons
+              name="keyboard-arrow-down"
+              size={24}
+              color={buttonColor}
+            />
           </TouchableOpacity>
         </View>
       )}
@@ -548,7 +577,7 @@ export default function NoteDetailScreen() {
                 Font Seç - {getSelectedFontName()}
               </Text>
               <TouchableOpacity onPress={() => setFontPickerVisible(false)}>
-                <MaterialIcons name="close" size={24} color="#333" />
+                <MaterialIcons name="close" size={24} color={buttonColor} />
               </TouchableOpacity>
             </View>
 
