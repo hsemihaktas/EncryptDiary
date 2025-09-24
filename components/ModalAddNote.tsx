@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
@@ -13,6 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AVAILABLE_FONTS } from "../constants/Fonts";
+import { getFontFamily } from "../utils/fontLoader";
 import LinedPaper from "./LinedPaper";
 
 type ModalAddNoteProps = {
@@ -22,7 +24,8 @@ type ModalAddNoteProps = {
     title: string,
     text: string,
     imageUris?: string[],
-    coverImageUri?: string
+    coverImageUri?: string,
+    fontFamily?: string
   ) => Promise<void>;
 };
 
@@ -38,6 +41,8 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
   const [imageUris, setImageUris] = useState<string[]>([]);
   const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedFont, setSelectedFont] = useState("Nunito-Regular");
+  const [fontPickerVisible, setFontPickerVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -46,6 +51,8 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
       setImageUris([]);
       setCoverImageUri(null);
       setCurrentImageIndex(0);
+      setSelectedFont("System");
+      setFontPickerVisible(false);
     }
   }, [visible]);
 
@@ -170,17 +177,30 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
       !coverImageUri
     )
       return;
+
     await onSave(
       title.trim(),
       text.trim(),
       imageUris.length > 0 ? imageUris : undefined,
-      coverImageUri || undefined
+      coverImageUri || undefined,
+      selectedFont
     );
     setTitle("");
     setText("");
     setImageUris([]);
     setCoverImageUri(null);
+    setSelectedFont("Nunito-Regular");
     onClose();
+  };
+
+  const handleFontSelect = (fontValue: string) => {
+    setSelectedFont(fontValue);
+    setFontPickerVisible(false);
+  };
+
+  const getSelectedFontName = () => {
+    const font = AVAILABLE_FONTS.find((f) => f.value === selectedFont);
+    return font ? font.name : "Nunito";
   };
 
   return (
@@ -225,6 +245,7 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
                   backgroundColor: "transparent",
                   color: "#000",
                   fontWeight: "bold",
+                  fontFamily: getFontFamily(selectedFont),
                 },
               ]}
               placeholder="Başlık"
@@ -237,7 +258,11 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
             <TextInput
               style={[
                 styles.inputText,
-                { backgroundColor: "transparent", color: "#000" },
+                {
+                  backgroundColor: "transparent",
+                  color: "#000",
+                  fontFamily: getFontFamily(selectedFont),
+                },
               ]}
               placeholder="Yeni not..."
               placeholderTextColor="#666"
@@ -313,6 +338,32 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
             </View>
 
             {/* Butonlar modalın en altında */}
+            {/* Font Seçici Butonu */}
+            <View style={styles.fontSection}>
+              <Text style={styles.sectionTitle}>Font Seçimi</Text>
+              <TouchableOpacity
+                style={[styles.fontButton, { borderColor: "#ddd" }]}
+                onPress={() => setFontPickerVisible(true)}
+              >
+                <MaterialIcons name="text-fields" size={24} color="#333" />
+                <Text
+                  style={[
+                    styles.fontButtonText,
+                    {
+                      fontFamily: getFontFamily(selectedFont),
+                    },
+                  ]}
+                >
+                  {getSelectedFontName()}
+                </Text>
+                <MaterialIcons
+                  name="keyboard-arrow-down"
+                  size={24}
+                  color="#333"
+                />
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.buttons}>
               <TouchableOpacity
                 style={[styles.button, styles.cancel]}
@@ -330,6 +381,77 @@ const ModalAddNote: React.FC<ModalAddNoteProps> = ({
           </LinedPaper>
         </View>
       </View>
+
+      {/* Font Seçici Modal */}
+      <Modal
+        visible={fontPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFontPickerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.fontPickerOverlay}
+          activeOpacity={1}
+          onPress={() => setFontPickerVisible(false)}
+        >
+          <View style={styles.fontPickerContainer}>
+            <View style={styles.fontPickerHeader}>
+              <Text
+                style={[
+                  styles.fontPickerTitle,
+                  {
+                    fontFamily: getFontFamily(selectedFont),
+                  },
+                ]}
+              >
+                Font Seç - {getSelectedFontName()}
+              </Text>
+              <TouchableOpacity onPress={() => setFontPickerVisible(false)}>
+                <MaterialIcons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.fontList}>
+              {AVAILABLE_FONTS.map((font) => (
+                <TouchableOpacity
+                  key={font.value}
+                  style={[
+                    styles.fontItem,
+                    selectedFont === font.value && styles.selectedFontItem,
+                  ]}
+                  onPress={() => handleFontSelect(font.value)}
+                >
+                  <View style={styles.fontItemContent}>
+                    <Text
+                      style={[
+                        styles.fontSampleText,
+                        {
+                          fontFamily: getFontFamily(font.value),
+                        },
+                      ]}
+                    >
+                      {font.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.fontSubtext,
+                        {
+                          fontFamily: getFontFamily(font.value),
+                        },
+                      ]}
+                    >
+                      Bugün güzel bir gün 🌸
+                    </Text>
+                  </View>
+                  {selectedFont === font.value && (
+                    <MaterialIcons name="check" size={20} color="#007bff" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </Modal>
   );
 };
@@ -490,6 +612,94 @@ const styles = StyleSheet.create({
   cancel: { backgroundColor: "red" },
   save: { backgroundColor: "#007bff" },
   buttonText: { fontSize: 16, fontWeight: "bold", color: "white" },
+
+  // Font seçici stilleri
+  fontSection: {
+    paddingHorizontal: 28,
+    marginTop: 16,
+  },
+  fontButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+  },
+  fontButtonText: {
+    flex: 1,
+    marginLeft: 8,
+    color: "#333",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  // Font picker modal stilleri
+  fontPickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fontPickerContainer: {
+    width: "90%",
+    maxHeight: "75%",
+    backgroundColor: "white",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  fontPickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  fontPickerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+    marginRight: 8,
+  },
+  fontList: {
+    maxHeight: 450,
+    paddingBottom: 8,
+  },
+  fontItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    minHeight: 70,
+  },
+  selectedFontItem: {
+    backgroundColor: "#e3f2fd",
+  },
+  fontItemContent: {
+    flex: 1,
+    marginRight: 12,
+    paddingRight: 8,
+  },
+  fontSampleText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+    lineHeight: 20,
+    flexWrap: "wrap",
+  },
+  fontSubtext: {
+    fontSize: 11,
+    color: "#666",
+    lineHeight: 16,
+    flexWrap: "wrap",
+  },
 });
 
 export default ModalAddNote;

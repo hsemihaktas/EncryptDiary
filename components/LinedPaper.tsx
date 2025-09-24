@@ -4,7 +4,11 @@ import { StyleSheet as RNStyleSheet, View } from "react-native";
 
 const LINE_HEIGHT = 28; // satır aralığı
 
-export default function LinedPaper({ children }: { children: React.ReactNode }) {
+export default function LinedPaper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [h, setH] = useState(0);
   const lineCount = Math.ceil(h / LINE_HEIGHT) + 1;
 

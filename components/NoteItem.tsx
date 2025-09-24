@@ -1,4 +1,3 @@
-import * as Font from "expo-font";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -8,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { getFontFamily } from "../utils/fontLoader";
 
 type NoteType = {
   title: string; // artık direkt title (doğru şifre) veya şifreli title (yanlış şifre)
@@ -15,6 +15,7 @@ type NoteType = {
   images?: string[]; // artık direkt images (doğru şifre) veya şifreli images (yanlış şifre)
   coverImage?: string; // artık direkt coverImage (doğru şifre) veya şifreli coverImage (yanlış şifre)
   imageCount?: number;
+  fontFamily?: string; // notun font ailesi
 };
 
 type NoteItemProps = {
@@ -28,21 +29,6 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, openEditModal }) => {
   const [imageCount, setImageCount] = useState<number>(0);
   const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fontLoaded, setFontLoaded] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        await Font.loadAsync({
-          GreatVibes: require("../assets/fonts/GreatVibes-Regular.ttf"),
-        });
-        setFontLoaded(true);
-      } catch (err) {
-        console.error("Font load error:", err);
-      }
-    };
-    load();
-  }, []);
 
   useEffect(() => {
     const prepareDisplay = () => {
@@ -50,7 +36,7 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, openEditModal }) => {
       setImageCount(0);
 
       try {
-        const title = item.title || "Başlık yok";
+        const title = item.title || "";
         setDisplayTitle(title);
 
         // Kapak fotoğrafını ayarla
@@ -69,7 +55,7 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, openEditModal }) => {
     prepareDisplay();
   }, [item]);
 
-  if (loading || !fontLoaded)
+  if (loading)
     return <ActivityIndicator style={{ marginVertical: 12 }} color="#000" />;
 
   // URI validation fonksiyonu
@@ -110,7 +96,15 @@ const NoteItem: React.FC<NoteItemProps> = ({ item, index, openEditModal }) => {
       >
         <View style={styles.overlay} />
         <View style={styles.titleWrapper}>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text
+            style={[
+              styles.title,
+              {
+                fontFamily: getFontFamily(item.fontFamily),
+              },
+            ]}
+            numberOfLines={2}
+          >
             {displayTitle}
           </Text>
         </View>

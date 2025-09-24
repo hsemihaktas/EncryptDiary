@@ -17,6 +17,7 @@ import {
 import LinedPaper from "../components/LinedPaper";
 import { useNotes } from "../context/NotesContext";
 import { useTheme } from "../context/ThemeContext";
+import { getFontFamily } from "../utils/fontLoader";
 // Artık decrypt'e gerek yok - NotesContext direkt veri sağlıyor
 
 export default function NoteDetailScreen() {
@@ -29,6 +30,7 @@ export default function NoteDetailScreen() {
   const [noteText, setNoteText] = useState("");
   const [imageUris, setImageUris] = useState<string[]>([]);
   const [coverImageUri, setCoverImageUri] = useState<string | null>(null);
+  const [fontFamily, setFontFamily] = useState<string>("Nunito-Regular");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
   const [storedPassword, setStoredPassword] = useState<string | null>(null);
@@ -60,6 +62,7 @@ export default function NoteDetailScreen() {
       setNoteText(note.content || "");
       setImageUris(note.images || []);
       setCoverImageUri(note.coverImage || null);
+      setFontFamily(note.fontFamily || "Nunito-Regular");
       setCurrentImageIndex(0);
       setLoaded(true);
     };
@@ -75,7 +78,8 @@ export default function NoteDetailScreen() {
         title,
         noteText,
         imageUris.length > 0 ? imageUris : undefined,
-        coverImageUri || undefined // kapak fotoğrafını gönder
+        coverImageUri || undefined, // kapak fotoğrafını gönder
+        fontFamily
       );
       setIsEditing(false);
     } catch (e) {
@@ -299,7 +303,13 @@ export default function NoteDetailScreen() {
 
             {/* Başlık */}
             <TextInput
-              style={[styles.titleInput, { color: "#000" }]}
+              style={[
+                styles.titleInput,
+                {
+                  color: "#000",
+                  fontFamily: getFontFamily(fontFamily),
+                },
+              ]}
               placeholder="Başlık"
               placeholderTextColor="#666"
               editable={isEditing && !!canEdit}
@@ -309,7 +319,13 @@ export default function NoteDetailScreen() {
 
             {/* İçerik */}
             <TextInput
-              style={[styles.input, { color: "#000" }]}
+              style={[
+                styles.input,
+                {
+                  color: "#000",
+                  fontFamily: getFontFamily(fontFamily),
+                },
+              ]}
               multiline
               textAlignVertical="top"
               editable={isEditing && !!canEdit}

@@ -8,6 +8,7 @@ type NoteType = {
   images?: string[]; // normal resimler (doğru şifre) veya şifreli resimler (yanlış şifre)
   coverImage?: string; // normal kapak (doğru şifre) veya şifreli kapak (yanlış şifre)
   imageCount?: number; // resim sayısı
+  fontFamily?: string; // seçilen font ailesi
 };
 
 type StoredNoteType = {
@@ -16,6 +17,7 @@ type StoredNoteType = {
   images?: string[]; // her zaman düz metin olarak saklanır
   coverImage?: string; // her zaman düz metin olarak saklanır
   imageCount?: number;
+  fontFamily?: string; // seçilen font ailesi
 };
 
 type NotesContextType = {
@@ -24,14 +26,16 @@ type NotesContextType = {
     title: string,
     text: string,
     imageUris?: string[],
-    coverImageUri?: string
+    coverImageUri?: string,
+    fontFamily?: string
   ) => Promise<void>;
   editNote: (
     index: number,
     title: string,
     text: string,
     imageUris?: string[],
-    coverImageUri?: string
+    coverImageUri?: string,
+    fontFamily?: string
   ) => Promise<void>;
   deleteNote: (index: number) => Promise<void>;
   loadNotesWithPassword: (
@@ -68,6 +72,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
           images: note.images,
           coverImage: note.coverImage,
           imageCount: note.imageCount || (note.images?.length ?? 0),
+          fontFamily: note.fontFamily || "Nunito-Regular",
         }));
         setNotes(displayNotes);
       } else {
@@ -110,6 +115,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
               images: garbledImages,
               coverImage: garbledCoverImage,
               imageCount: note.imageCount || 0,
+              fontFamily: note.fontFamily,
             });
           } catch (err) {
             // Şifreleme hatası durumunda fallback
@@ -117,6 +123,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
               title: "⚠️ Şifreleme Hatası",
               content: "⚠️ Veri okunamadı",
               imageCount: note.imageCount || 0,
+              fontFamily: "Nunito-Regular",
             });
           }
         }
@@ -131,16 +138,17 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
       title: string,
       text: string,
       imageUris?: string[],
-      coverImageUri?: string
+      coverImageUri?: string,
+      fontFamily?: string
     ) => {
       const rawNotes = await loadRawNotes();
-
       const newNote: StoredNoteType = {
         title,
         content: text,
         images: imageUris,
         coverImage: coverImageUri,
         imageCount: imageUris?.length || 0,
+        fontFamily: fontFamily || "Nunito-Regular",
       };
 
       const updatedRawNotes = [...rawNotes, newNote];
@@ -153,6 +161,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
         images: imageUris,
         coverImage: coverImageUri,
         imageCount: imageUris?.length || 0,
+        fontFamily: fontFamily || "Nunito-Regular",
       };
       setNotes((prevNotes) => [...prevNotes, displayNote]);
     },
@@ -165,7 +174,8 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
       title: string,
       text: string,
       imageUris?: string[],
-      coverImageUri?: string
+      coverImageUri?: string,
+      fontFamily?: string
     ) => {
       const rawNotes = await loadRawNotes();
 
@@ -176,6 +186,7 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
           images: imageUris,
           coverImage: coverImageUri,
           imageCount: imageUris?.length || 0,
+          fontFamily: fontFamily || rawNotes[index].fontFamily || "Nunito-Regular",
         };
 
         await saveRawNotes(rawNotes);
@@ -189,6 +200,8 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
             images: imageUris,
             coverImage: coverImageUri,
             imageCount: imageUris?.length || 0,
+            fontFamily:
+              fontFamily || updatedNotes[index].fontFamily || "Nunito-Regular",
           };
           return updatedNotes;
         });

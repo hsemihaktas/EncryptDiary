@@ -48,9 +48,10 @@ export default function NotesScreen() {
     title: string,
     text: string,
     imageUris?: string[],
-    coverImageUri?: string
+    coverImageUri?: string,
+    fontFamily?: string
   ) => {
-    await addNote(title, text, imageUris, coverImageUri);
+    await addNote(title, text, imageUris, coverImageUri, fontFamily);
     setModalVisible(false);
   };
 
