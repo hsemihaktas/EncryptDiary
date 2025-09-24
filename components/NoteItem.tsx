@@ -143,9 +143,7 @@ const styles = StyleSheet.create({
   title: {
     color: "#fff",
     fontSize: 20,
-    fontWeight: "bold",
     textAlign: "center",
-    fontFamily: "GreatVibes",
     textShadowColor: "#000",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,

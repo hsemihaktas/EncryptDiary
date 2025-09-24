@@ -583,7 +583,6 @@ const styles = StyleSheet.create({
   },
   titleInput: {
     fontSize: 22,
-    fontWeight: "bold",
     marginTop: 6,
     marginBottom: 8,
     lineHeight: 30,
