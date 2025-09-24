@@ -581,7 +581,7 @@ export default function NoteDetailScreen() {
                         },
                       ]}
                     >
-                      Bugün güzel bir gün 🌸
+                      Örnek
                     </Text>
                   </View>
                   {fontFamily === font.value && (
@@ -596,7 +596,6 @@ export default function NoteDetailScreen() {
     </View>
   );
 }
-const LINE_HEIGHT = 28;
 
 const styles = StyleSheet.create({
   container: {
@@ -628,8 +627,6 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
   },
   imageList: {
     marginBottom: 8,
@@ -865,8 +862,6 @@ const styles = StyleSheet.create({
   // Okuma modu stilleri
   readModeTitle: {
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
   },
   readModeTitleText: {
     fontSize: 22,
